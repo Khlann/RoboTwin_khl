@@ -1,0 +1,70 @@
+{
+    "center": [
+        0.00010902065994666226,
+        0.302748750083335,
+        0.0001887985675826938
+    ],
+    "extents": [
+        1.9310479945271184,
+        0.6401978666199479,
+        1.359507756250429
+    ],
+    "scale": [
+        0.3,
+        0.3,
+        0.3
+    ],
+    "transform_matrix": [
+        [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+        ],
+        [
+            0.0,
+            1.0,
+            0.0,
+            0.0
+        ],
+        [
+            0.0,
+            0.0,
+            1.0,
+            0.0
+        ],
+        [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+        ]
+    ],
+    "target_pose": [
+        [
+            [1.0, 0.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0, 0.0],
+            [0.0, 0.0, 1.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0]
+        ]
+    ],
+    "contact_points_pose": [
+        [[0, 0, 1, 0], [0, -1, 0, 0], [1, 0, 0, 0.0965], [0, 0, 0, 1]]
+    ],
+    "functional_matrix": [
+        [
+            [1.0, 0.0, 0.0, 0.0],
+            [0.0, -0.0, 1.0, -0.32],
+            [0.0, -1.0, -0.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0]
+        ]
+    ],
+    "orientation_point": [],
+    "contact_points_group": [[0, 1, 2, 3, 4, 5, 6, 7]],
+    "contact_points_mask": [true],
+    "target_point_discription": ["The center point on the top of the box."],
+    "contact_points_discription": [],
+    "functional_point_discription": ["Bottom center point", "Top center point"],
+    "orientation_point_discription": [],
+    "stable": true
+}

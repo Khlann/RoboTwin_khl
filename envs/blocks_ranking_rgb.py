@@ -11,11 +11,12 @@ class blocks_ranking_rgb(Base_Task):
         super()._init_task_env_(**kwags)
 
     def load_actors(self):
+        # Single arm task: reduced randomization scope for left arm workspace
         while True:
             block_pose_lst = []
             for i in range(3):
                 block_pose = rand_pose(
-                    xlim=[-0.28, 0.28],
+                    xlim=[-0.20, 0.05],  # Reduced range, left side only
                     ylim=[-0.08, 0.05],
                     zlim=[0.765],
                     qpos=[1, 0, 0, 0],
@@ -33,7 +34,7 @@ class blocks_ranking_rgb(Base_Task):
                 while (abs(block_pose.p[0]) < 0.05 or np.sum(pow(block_pose.p[:2] - np.array([0, -0.1]), 2)) < 0.01
                        or not check_block_pose(block_pose)):
                     block_pose = rand_pose(
-                        xlim=[-0.28, 0.28],
+                        xlim=[-0.20, 0.05],  # Reduced range, left side only
                         ylim=[-0.08, 0.05],
                         zlim=[0.765],
                         qpos=[1, 0, 0, 0],
@@ -81,62 +82,58 @@ class blocks_ranking_rgb(Base_Task):
         self.add_prohibit_area(self.block2, padding=0.05)
         self.add_prohibit_area(self.block3, padding=0.05)
 
-        self.prohibited_area.append([-0.17, -0.22, 0.17, -0.12])
+        # Single arm: reduced prohibited area
+        self.prohibited_area.append([-0.15, -0.22, 0.05, -0.12])
 
         # Generate random y position for all blocks
         y_pose = np.random.uniform(-0.2, -0.1)
 
-        # Define target poses for each block with random x positions
+        # Single arm: target poses adjusted for left arm workspace
         self.block1_target_pose = [
             np.random.uniform(-0.09, -0.08),
             y_pose,
             0.74 + self.table_z_bias,
         ] + [0, 1, 0, 0]
         self.block2_target_pose = [
-            np.random.uniform(-0.01, 0.01),
+            np.random.uniform(-0.05, -0.03),  # Moved left for single arm
             y_pose,
             0.74 + self.table_z_bias,
         ] + [0, 1, 0, 0]
         self.block3_target_pose = [
-            np.random.uniform(0.08, 0.09),
+            np.random.uniform(-0.01, 0.01),  # Moved left for single arm
             y_pose,
             0.74 + self.table_z_bias,
         ] + [0, 1, 0, 0]
 
     def play_once(self):
-        # Initialize last gripper state
-        self.last_gripper = None
-
+        # Single arm task: always use left arm, no need to track last gripper
         # Pick and place each block to their target positions
-        arm_tag1 = self.pick_and_place_block(self.block1, self.block1_target_pose)
-        arm_tag2 = self.pick_and_place_block(self.block2, self.block2_target_pose)
-        arm_tag3 = self.pick_and_place_block(self.block3, self.block3_target_pose)
+        arm_tag = self.pick_and_place_block(self.block1, self.block1_target_pose)
+        arm_tag = self.pick_and_place_block(self.block2, self.block2_target_pose)
+        arm_tag = self.pick_and_place_block(self.block3, self.block3_target_pose)
 
-        # Store information about the blocks and which arms were used
+        # Store information about the blocks and which arm was used
         self.info["info"] = {
             "{A}": "red block",
             "{B}": "green block",
             "{C}": "blue block",
-            "{a}": arm_tag1,
-            "{b}": arm_tag2,
-            "{c}": arm_tag3,
+            "{a}": arm_tag,
+            "{b}": arm_tag,
+            "{c}": arm_tag,
         }
         return self.info
 
     def pick_and_place_block(self, block, target_pose=None):
-        block_pose = block.get_pose().p
-        arm_tag = ArmTag("left" if block_pose[0] < 0 else "right")
+        # Single arm task: always use left arm
+        arm_tag = ArmTag("left")
 
-        if self.last_gripper is not None and (self.last_gripper != arm_tag):
-            self.move(
-                self.grasp_actor(block, arm_tag=arm_tag, pre_grasp_dis=0.09, grasp_dis=0.01),  # arm_tag
-                self.back_to_origin(arm_tag=arm_tag.opposite),  # arm_tag.opposite
-            )
-        else:
-            self.move(self.grasp_actor(block, arm_tag=arm_tag, pre_grasp_dis=0.09))  # arm_tag
+        # Grasp the block
+        self.move(self.grasp_actor(block, arm_tag=arm_tag, pre_grasp_dis=0.09, grasp_dis=0.01))
 
-        self.move(self.move_by_displacement(arm_tag=arm_tag, z=0.07))  # arm_tag
+        # Move upward
+        self.move(self.move_by_displacement(arm_tag=arm_tag, z=0.07))
 
+        # Place the block at target pose
         self.move(
             self.place_actor(
                 block,
@@ -147,9 +144,9 @@ class blocks_ranking_rgb(Base_Task):
                 dis=0.02,
                 constrain="align",
             ))
-        self.move(self.move_by_displacement(arm_tag=arm_tag, z=0.07, move_axis="arm"))  # arm_tag
+        # Move arm up after placing
+        self.move(self.move_by_displacement(arm_tag=arm_tag, z=0.07, move_axis="arm"))
 
-        self.last_gripper = arm_tag
         return str(arm_tag)
 
     def check_success(self):
@@ -159,6 +156,7 @@ class blocks_ranking_rgb(Base_Task):
 
         eps = [0.13, 0.03]
 
+        # Single arm: only check left gripper
         return (np.all(abs(block1_pose[:2] - block2_pose[:2]) < eps)
                 and np.all(abs(block2_pose[:2] - block3_pose[:2]) < eps) and block1_pose[0] < block2_pose[0]
-                and block2_pose[0] < block3_pose[0] and self.is_left_gripper_open() and self.is_right_gripper_open())
+                and block2_pose[0] < block3_pose[0] and self.is_left_gripper_open())

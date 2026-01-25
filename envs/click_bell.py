@@ -11,15 +11,16 @@ class click_bell(Base_Task):
         super()._init_task_env_(**kwags)
 
     def load_actors(self):
+        # Single arm task: reduced randomization scope for left arm workspace
         rand_pos = rand_pose(
-            xlim=[-0.25, 0.25],
-            ylim=[-0.2, 0.0],
+            xlim=[-0.20, 0.0],  # Reduced range, left side only
+            ylim=[-0.15, 0.0],  # Reduced y range for single arm
             qpos=[0.5, 0.5, 0.5, 0.5],
         )
         while abs(rand_pos.p[0]) < 0.05:
             rand_pos = rand_pose(
-                xlim=[-0.25, 0.25],
-                ylim=[-0.2, 0.0],
+                xlim=[-0.20, 0.0],  # Reduced range, left side only
+                ylim=[-0.15, 0.0],  # Reduced y range for single arm
                 qpos=[0.5, 0.5, 0.5, 0.5],
             )
 
@@ -34,15 +35,15 @@ class click_bell(Base_Task):
         )
 
         self.add_prohibit_area(self.bell, padding=0.07)
-        self.check_arm_function = self.is_left_gripper_close if self.bell.get_pose().p[0] < 0 else self.is_right_gripper_close
+        # Single arm: always use left gripper
+        self.check_arm_function = self.is_left_gripper_close
     
     def play_once(self):
-        # Choose the arm to use: right arm if the bell is on the right side (positive x), left otherwise
-        arm_tag = ArmTag("right" if self.bell.get_pose().p[0] > 0 else "left")
+        # Single arm task: always use left arm
+        arm_tag = ArmTag("left")
     
         # Move the gripper above the top center of the bell and close the gripper to simulate a click
         # Note: grasp_actor here is not used to grasp the bell, but to simulate a touch/click action
-        # You must use the same pre_grasp_dis and grasp_dis values as in the click_bell task
         self.move(self.grasp_actor(
             self.bell,
             arm_tag=arm_tag,

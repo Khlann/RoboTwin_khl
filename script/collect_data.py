@@ -224,10 +224,30 @@ def run(TASK_ENV, args):
             with open(info_file_path, "w", encoding="utf-8") as file:
                 json.dump(info_db, file, ensure_ascii=False, indent=4)
 
+            # Check success status before saving
+            save_on_failure = args.get("save_on_failure", False)
+            is_success = TASK_ENV.check_success()
+            
+            if not is_success:
+                if save_on_failure:
+                    print(f"\033[93mEpisode {episode_idx} failed but will save data (save_on_failure=True)\033[0m")
+                else:
+                    print(f"\033[91mEpisode {episode_idx} failed and will not save data\033[0m")
+                    TASK_ENV.close_env(clear_cache=((episode_idx + 1) % clear_cache_freq == 0))
+                    # Remove cache if we're not saving
+                    if hasattr(TASK_ENV, 'folder_path') and TASK_ENV.folder_path:
+                        TASK_ENV.remove_data_cache()
+                    assert False, "Collect Error: Task failed and save_on_failure is False"
+            
+            # Save data (either success or failure with save_on_failure=True)
             TASK_ENV.close_env(clear_cache=((episode_idx + 1) % clear_cache_freq == 0))
             TASK_ENV.merge_pkl_to_hdf5_video()
             TASK_ENV.remove_data_cache()
-            assert TASK_ENV.check_success(), "Collect Error"
+            
+            if is_success:
+                print(f"\033[92mEpisode {episode_idx} succeeded\033[0m")
+            else:
+                print(f"\033[93mEpisode {episode_idx} failed but data saved\033[0m")
 
         command = f"cd description && bash gen_episode_instructions.sh {args['task_name']} {args['task_config']} {args['language_num']}"
         os.system(command)

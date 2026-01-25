@@ -548,7 +548,13 @@ class Base_Task(gym.Env):
         # print('Merging pkl to hdf5: ', cache_path, ' -> ', target_file_path)
 
         os.makedirs(f"{self.save_dir}/data", exist_ok=True)
-        process_folder_to_hdf5_video(cache_path, target_file_path, target_video_path)
+        
+        # Check if third_view is enabled and generate third_view video path
+        third_view_video_path = None
+        if self.data_type.get("third_view", False):
+            third_view_video_path = f"{self.save_dir}/video/episode{self.ep_num}_third_view.mp4"
+        
+        process_folder_to_hdf5_video(cache_path, target_file_path, target_video_path, third_view_video_path)
 
     def remove_data_cache(self):
         folder_path = self.folder_path["cache"]

@@ -57,6 +57,9 @@ class Camera:
 
         self.collect_head_camera = kwags["camera"].get("collect_head_camera", True)
         self.collect_wrist_camera = kwags["camera"].get("collect_wrist_camera", True)
+        
+        # Observer camera (third_view) configuration
+        self.observer_camera_config = kwags["camera"].get("observer_camera", {})
 
         # embodiment = kwags.get('embodiment')
         # embodiment_config_path = os.path.join(CONFIGS_PATH, '_embodiment_config.yml')
@@ -217,18 +220,22 @@ class Camera:
                 self.static_camera_config.append(camera_config)
 
         # observer camera
+        # Get configuration with defaults
+        observer_width = self.observer_camera_config.get("width", 320)
+        observer_height = self.observer_camera_config.get("height", 240)
+        observer_fovy = np.deg2rad(self.observer_camera_config.get("fovy", 93))
+        observer_cam_pos = np.array(self.observer_camera_config.get("position", [0.0, 0.23, 1.33]))
+        observer_cam_forward = np.array(self.observer_camera_config.get("forward", [0, -1, -1.02]))
+        observer_cam_left = np.array(self.observer_camera_config.get("left", [1, 0, 0]))
+        
         self.observer_camera = scene.add_camera(
             name="observer_camera",
-            width=320,
-            height=240,
-            fovy=np.deg2rad(93),
+            width=observer_width,
+            height=observer_height,
+            fovy=observer_fovy,
             near=near,
             far=far,
         )
-        observer_cam_pos = np.array([0.0, 0.23, 1.33])
-        observer_cam_forward = np.array([0, -1, -1.02])
-        # observer_cam_left = np.array([1,-1, 0])
-        observer_cam_left = np.array([1, 0, 0])
         observer_up = np.cross(observer_cam_forward, observer_cam_left)
         observer_mat44 = np.eye(4)
         observer_mat44[:3, :3] = np.stack([observer_cam_forward, observer_cam_left, observer_up], axis=1)

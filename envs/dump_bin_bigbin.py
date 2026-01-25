@@ -12,22 +12,23 @@ class dump_bin_bigbin(Base_Task):
     def load_actors(self):
         self.dustbin = create_actor(
             self,
-            pose=sapien.Pose([-0.45, 0, 0], [0.5, 0.5, 0.5, 0.5]),
+            pose=sapien.Pose([-0.35, 0, 0], [0.5, 0.5, 0.5, 0.5]),  # Moved closer for single arm
             modelname="011_dustbin",
             convex=True,
             is_static=True,
         )
+        # Single arm task: reduced randomization scope for left arm workspace
         deskbin_pose = rand_pose(
-            xlim=[-0.2, 0.2],
-            ylim=[-0.2, -0.05],
+            xlim=[-0.18, 0.0],  # Reduced range, left side only
+            ylim=[-0.15, -0.05],  # Reduced y range for single arm
             qpos=[0.651892, 0.651428, 0.274378, 0.274584],
             rotate_rand=True,
             rotate_lim=[0, np.pi / 8.5, 0],
         )
         while abs(deskbin_pose.p[0]) < 0.05:
             deskbin_pose = rand_pose(
-                xlim=[-0.2, 0.2],
-                ylim=[-0.2, -0.05],
+                xlim=[-0.18, 0.0],  # Reduced range, left side only
+                ylim=[-0.15, -0.05],  # Reduced y range for single arm
                 qpos=[0.651892, 0.651428, 0.274378, 0.274584],
                 rotate_rand=True,
                 rotate_lim=[0, np.pi / 8.5, 0],
@@ -63,21 +64,22 @@ class dump_bin_bigbin(Base_Task):
             self.sphere_lst[-1].find_component_by_type(sapien.physx.PhysxRigidDynamicComponent).mass = 0.0001
 
         self.add_prohibit_area(self.deskbin, padding=0.04)
-        self.prohibited_area.append([-0.2, -0.2, 0.2, 0.2])
-        # Define target pose for placing
-        self.middle_pose = [0, -0.1, 0.741 + self.table_z_bias, 1, 0, 0, 0]
-        # Define movement actions for shaking the deskbin
+        # Single arm: reduced prohibited area
+        self.prohibited_area.append([-0.15, -0.15, 0.05, 0.05])
+        # Single arm: target pose adjusted for left arm workspace
+        self.middle_pose = [-0.05, -0.1, 0.741 + self.table_z_bias, 1, 0, 0, 0]  # Moved left
+        # Define movement actions for shaking the deskbin (single arm: only left arm)
         action_lst = [
             Action(
                 ArmTag('left'),
                 "move",
-                [-0.45, -0.05, 1.05, -0.694654, -0.178228, 0.165979, -0.676862],
+                [-0.35, -0.05, 1.05, -0.694654, -0.178228, 0.165979, -0.676862],  # Adjusted position
             ),
             Action(
                 ArmTag('left'),
                 "move",
                 [
-                    -0.45,
+                    -0.35,  # Adjusted position
                     -0.05 - np.random.rand() * 0.02,
                     1.05 - np.random.rand() * 0.02,
                     -0.694654,
@@ -90,57 +92,34 @@ class dump_bin_bigbin(Base_Task):
         self.pour_actions = (ArmTag('left'), action_lst)
 
     def play_once(self):
-        # Get deskbin's current position
-        deskbin_pose = self.deskbin.get_pose().p
-        # Determine which arm to use for grasping based on deskbin's position
-        grasp_deskbin_arm_tag = ArmTag("left" if deskbin_pose[0] < 0 else "right")
-        # Always use left arm for placing
-        place_deskbin_arm_tag = ArmTag("left")
+        # Single arm task: always use left arm
+        arm_tag = ArmTag("left")
 
-        if grasp_deskbin_arm_tag == "right":
-            # Grasp the deskbin with right arm
-            self.move(
-                self.grasp_actor(
-                    self.deskbin,
-                    arm_tag=grasp_deskbin_arm_tag,
-                    pre_grasp_dis=0.08,
-                    contact_point_id=3,
-                ))
-            # Lift the deskbin up
-            self.move(self.move_by_displacement(grasp_deskbin_arm_tag, z=0.08, move_axis="arm"))
-            # Place the deskbin at target pose
-            self.move(
-                self.place_actor(
-                    self.deskbin,
-                    target_pose=self.middle_pose,
-                    arm_tag=grasp_deskbin_arm_tag,
-                    pre_dis=0.08,
-                    dis=0.01,
-                ))
-            # Move arm up after placing
-            self.move(self.move_by_displacement(grasp_deskbin_arm_tag, z=0.1, move_axis="arm"))
-            # Return right arm to origin while simultaneously grasping with left arm
-            self.move(
-                self.back_to_origin(grasp_deskbin_arm_tag),
-                self.grasp_actor(
-                    self.deskbin,
-                    arm_tag=place_deskbin_arm_tag,
-                    pre_grasp_dis=0.08,
-                    contact_point_id=1,
-                ),
-            )
-        else:
-            # If deskbin is on left side, directly grasp with left arm
-            self.move(
-                self.grasp_actor(
-                    self.deskbin,
-                    arm_tag=place_deskbin_arm_tag,
-                    pre_grasp_dis=0.08,
-                    contact_point_id=1,
-                ))
+        # Grasp the deskbin with left arm
+        self.move(
+            self.grasp_actor(
+                self.deskbin,
+                arm_tag=arm_tag,
+                pre_grasp_dis=0.08,
+                contact_point_id=1,  # Use contact point 1 for left arm
+            ))
 
-        # Lift the deskbin with left arm
-        self.move(self.move_by_displacement(arm_tag=place_deskbin_arm_tag, z=0.08, move_axis="arm"))
+        # Lift the deskbin up
+        self.move(self.move_by_displacement(arm_tag=arm_tag, z=0.08, move_axis="arm"))
+        
+        # Place the deskbin at target pose
+        self.move(
+            self.place_actor(
+                self.deskbin,
+                target_pose=self.middle_pose,
+                arm_tag=arm_tag,
+                pre_dis=0.08,
+                dis=0.01,
+            ))
+        
+        # Move arm up after placing (no need to transfer to another arm)
+        self.move(self.move_by_displacement(arm_tag=arm_tag, z=0.1, move_axis="arm"))
+        
         # Perform shaking motion 3 times
         for i in range(3):
             self.move(self.pour_actions)

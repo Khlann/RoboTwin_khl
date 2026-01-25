@@ -51,6 +51,16 @@ echo "Installing Curobo ..."
 cd envs
 git clone https://github.com/NVlabs/curobo.git
 cd curobo
+# Fix for gcc 13+ compatibility with CUDA 12.1
+# Use gcc-12 if available (CUDA 12.1 officially supports gcc <= 12)
+if command -v gcc-12 &> /dev/null && command -v g++-12 &> /dev/null; then
+    echo "Using gcc-12 for CUDA 12.1 compatibility..."
+    export CC=gcc-12
+    export CXX=g++-12
+else
+    echo "Warning: gcc-12 not found. Using default gcc with --allow-unsupported-compiler flag (may cause issues)."
+    export NVCC_PREPEND_FLAGS="--allow-unsupported-compiler"
+fi
 pip install -e . --no-build-isolation
 cd ../..
 

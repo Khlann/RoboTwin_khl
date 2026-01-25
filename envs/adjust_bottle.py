@@ -10,19 +10,20 @@ class adjust_bottle(Base_Task):
         super()._init_task_env_(**kwags)
 
     def load_actors(self):
-        self.qpose_tag = np.random.randint(0, 2)
-        qposes = [[0.707, 0.0, 0.0, -0.707], [0.707, 0.0, 0.0, 0.707]]
-        xlims = [[-0.12, -0.08], [0.08, 0.12]]
+        # Single arm task: fixed configuration for left arm
+        # Reduced randomization scope for single arm workspace
+        qpose = [0.707, 0.0, 0.0, -0.707]  # Fixed for left side
+        xlim = [-0.12, -0.08]  # Left side only, reduced range
 
         self.model_id = np.random.choice([13, 16])
 
         self.bottle = rand_create_actor(
             self,
-            xlim=xlims[self.qpose_tag],
-            ylim=[-0.13, -0.08],
+            xlim=xlim,
+            ylim=[-0.13, -0.08],  # Reduced y range for single arm
             zlim=[0.752],
             rotate_rand=True,
-            qpos=qposes[self.qpose_tag],
+            qpos=qpose,
             modelname="001_bottle",
             convex=True,
             rotate_lim=(0, 0, 0.4),
@@ -30,16 +31,14 @@ class adjust_bottle(Base_Task):
         )
         self.delay(4)
         self.add_prohibit_area(self.bottle, padding=0.15)
-        self.left_target_pose = [-0.25, -0.12, 0.95, 0, 1, 0, 0]
-        self.right_target_pose = [0.25, -0.12, 0.95, 0, 1, 0, 0]
+        # Single arm: only left target pose, adjusted for single arm reach
+        self.target_pose = [-0.15, -0.12, 0.95, 0, 1, 0, 0]  # Closer to center for single arm
 
     def play_once(self):
-        # Determine which arm to use based on qpose_tag (1 for right, else left)
-        arm_tag = ArmTag("right" if self.qpose_tag == 1 else "left")
-        # Select target pose based on qpose_tag (right_target_pose or left_target_pose)
-        target_pose = (self.right_target_pose if self.qpose_tag == 1 else self.left_target_pose)
+        # Single arm task: always use left arm
+        arm_tag = ArmTag("left")
 
-        # Grasp the bottle with specified arm
+        # Grasp the bottle with left arm
         self.move(self.grasp_actor(self.bottle, arm_tag=arm_tag, pre_grasp_dis=0.1))
         # Move the arm upward by 0.1 meters along z-axis
         self.move(self.move_by_displacement(arm_tag=arm_tag, z=0.1, move_axis="arm"))
@@ -47,7 +46,7 @@ class adjust_bottle(Base_Task):
         self.move(
             self.place_actor(
                 self.bottle,
-                target_pose=target_pose,
+                target_pose=self.target_pose,
                 arm_tag=arm_tag,
                 functional_point_id=0,
                 pre_dis=0.0,
@@ -63,5 +62,5 @@ class adjust_bottle(Base_Task):
     def check_success(self):
         target_hight = 0.9
         bottle_pose = self.bottle.get_functional_point(0)
-        return ((self.qpose_tag == 0 and bottle_pose[0] < -0.15) or
-                (self.qpose_tag == 1 and bottle_pose[0] > 0.15)) and bottle_pose[2] > target_hight
+        # Single arm: only check left side position
+        return bottle_pose[0] < -0.10 and bottle_pose[2] > target_hight
