@@ -10,10 +10,11 @@ class shake_bottle(Base_Task):
         super()._init_task_env_(**kwags)
 
     def load_actors(self):
+        # Single arm task: adjust bottle position for single arm workspace
         self.id_list = [i for i in range(20)]
         rand_pos = rand_pose(
-            xlim=[-0.15, 0.15],
-            ylim=[-0.15, -0.05],
+            xlim=[-0.15, 0.05],  # Reduced range, favor left side for single arm
+            ylim=[-0.15, -0.05], # Adjusted y range for single arm
             zlim=[0.785],
             qpos=[0, 0, 1, 0],
             rotate_rand=True,
@@ -21,8 +22,8 @@ class shake_bottle(Base_Task):
         )
         while abs(rand_pos.p[0]) < 0.1:
             rand_pos = rand_pose(
-                xlim=[-0.15, 0.15],
-                ylim=[-0.15, -0.05],
+                xlim=[-0.15, 0.05],  # Reduced range for single arm
+                ylim=[-0.15, -0.05], # Adjusted y range for single arm
                 zlim=[0.785],
                 qpos=[0, 0, 1, 0],
                 rotate_rand=True,
@@ -40,15 +41,15 @@ class shake_bottle(Base_Task):
         self.add_prohibit_area(self.bottle, padding=0.05)
 
     def play_once(self):
-        # Determine which arm to use based on bottle position
-        arm_tag = ArmTag("right" if self.bottle.get_pose().p[0] > 0 else "left")
+        # Single arm task: always use left arm
+        arm_tag = ArmTag("right")
 
         # Grasp the bottle with specified pre-grasp distance
         self.move(self.grasp_actor(self.bottle, arm_tag=arm_tag, pre_grasp_dis=0.1))
 
         # Lift the bottle up by 0.2m while rotating to target orientation
         target_quat = [0.707, 0, 0, 0.707]
-        self.move(self.move_by_displacement(arm_tag=arm_tag, z=0.1, quat=target_quat))
+        self.move(self.move_by_displacement(arm_tag=arm_tag, z=0.2, quat=target_quat))
 
         # Prepare two shaking orientations by rotating around y-axis
         quat1 = deepcopy(target_quat)
@@ -74,7 +75,7 @@ class shake_bottle(Base_Task):
         self.move(self.move_by_displacement(arm_tag=arm_tag, quat=target_quat))
 
         self.info["info"] = {
-            "{A}": f"001_bottle/base{self.bottle_id}",
+            "{A}": f"001_bottle/base4",
             "{a}": str(arm_tag),
         }
         return self.info

@@ -128,6 +128,8 @@ class Base_Task(gym.Env):
         self.render_freq = render_freq
 
         self.robot.set_origin_endpose()
+        # for _ in range(20000):
+        #     self.scene.step()
         self.load_actors()
 
         if self.cluttered_table:

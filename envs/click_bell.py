@@ -11,17 +11,22 @@ class click_bell(Base_Task):
         super()._init_task_env_(**kwags)
 
     def load_actors(self):
-        # Single arm task: reduced randomization scope for left arm workspace
+        # Single arm task: adjust bell position for single arm workspace
+        # Position closer to center, within left arm reach
         rand_pos = rand_pose(
-            xlim=[-0.20, 0.0],  # Reduced range, left side only
-            ylim=[-0.15, 0.0],  # Reduced y range for single arm
+            xlim=[-0.15, 0.05],   # Reduced range, favor left side for single arm
+            ylim=[-0.15, 0.0],    # Adjusted y range for single arm
             qpos=[0.5, 0.5, 0.5, 0.5],
+            rotate_rand=True,
+            rotate_lim=[0, 3.14, 0],
         )
         while abs(rand_pos.p[0]) < 0.05:
             rand_pos = rand_pose(
-                xlim=[-0.20, 0.0],  # Reduced range, left side only
-                ylim=[-0.15, 0.0],  # Reduced y range for single arm
+                xlim=[-0.15, 0.05],   # Reduced range for single arm
+                ylim=[-0.15, 0.0],     # Adjusted y range for single arm
                 qpos=[0.5, 0.5, 0.5, 0.5],
+                rotate_rand=True,
+                rotate_lim=[0, 3.14, 0],
             )
 
         self.bell_id = np.random.choice([0, 1], 1)[0]
@@ -65,7 +70,7 @@ class click_bell(Base_Task):
         self.check_success()
     
         # Record which bell and arm were used in the info dictionary
-        self.info["info"] = {"{A}": f"050_bell/base{self.bell_id}", "{a}": str(arm_tag)}
+        self.info["info"] = {"{A}": f"050_bell/base0", "{a}": str(arm_tag)}
         return self.info
 
 

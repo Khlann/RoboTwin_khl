@@ -11,17 +11,19 @@ class click_alarmclock(Base_Task):
         super()._init_task_env_(**kwags)
 
     def load_actors(self):
+        # Single arm task: adjust alarm clock position for single arm workspace
+        # Position closer to center, within left arm reach
         rand_pos = rand_pose(
-            xlim=[-0.25, 0.25],
-            ylim=[-0.2, 0.0],
+            xlim=[-0.15, 0.1],   # Reduced range, favor left side for single arm
+            ylim=[-0.15, 0.0],   # Adjusted y range for single arm
             qpos=[0.5, 0.5, 0.5, 0.5],
             rotate_rand=True,
             rotate_lim=[0, 3.14, 0],
         )
         while abs(rand_pos.p[0]) < 0.05:
             rand_pos = rand_pose(
-                xlim=[-0.25, 0.25],
-                ylim=[-0.2, 0.0],
+                xlim=[-0.15, 0.1],   # Reduced range for single arm
+                ylim=[-0.15, 0.0],   # Adjusted y range for single arm
                 qpos=[0.5, 0.5, 0.5, 0.5],
                 rotate_rand=True,
                 rotate_lim=[0, 3.14, 0],
@@ -37,11 +39,12 @@ class click_alarmclock(Base_Task):
             is_static=True,
         )
         self.add_prohibit_area(self.alarm, padding=0.05)
-        self.check_arm_function = self.is_left_gripper_close if self.alarm.get_pose().p[0] < 0 else self.is_right_gripper_close
+        # Single arm: always use left arm
+        self.check_arm_function = self.is_left_gripper_close
 
     def play_once(self):
-        # Determine which arm to use based on alarm clock's position (right if positive x, left otherwise)
-        arm_tag = ArmTag("right" if self.alarm.get_pose().p[0] > 0 else "left")
+        # Single arm task: always use left arm
+        arm_tag = ArmTag("left")
     
         # Move the gripper above the top center of the alarm clock and close the gripper to simulate a click
         # Note: although the code structure resembles a grasp, it is used here to simulate a touch/click action

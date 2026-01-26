@@ -12,13 +12,20 @@ class place_bread_basket(Base_Task):
         super()._init_task_env_(**kwargs)
 
     def load_actors(self):
+        # Single arm task: adjust basket position for single arm workspace
+        # Position closer to center, within left arm reach
+        # Basket moved more to the left side
         rand_pos = rand_pose(
-            xlim=[0.0, 0.0],
-            ylim=[-0.2, -0.2],
-            qpos=[0.5, 0.5, 0.5, 0.5],
-            rotate_rand=True,
-            rotate_lim=[0, 3.14, 0],
+            # xlim=[0.32, 0.22],  # Moved left: reduced range and shifted leftward
+            # ylim=[-0.15, -0.1],   # Adjusted for single arm reach
+            xlim=[0.32],
+            ylim=[-0.149659], 
+            zlim=[0.741],
+            qpos=[0.651135, 0.651135, 0.275723, 0.275723],
+            # rotate_rand=True,
+            # rotate_lim=[0, 3.14, 0],
         )
+        # print(rand_pos)
         id_list = [0, 1, 2, 3, 4]
         self.basket_id = np.random.choice(id_list)
         self.breadbasket = create_actor(
@@ -33,10 +40,11 @@ class place_bread_basket(Base_Task):
         self.bread: list[Actor] = []
         self.bread_id = []
 
+        # Single arm task: reduce bread placement range for left arm workspace
         for i in range(2):
             rand_pos = rand_pose(
-                xlim=[-0.27, 0.27],
-                ylim=[-0.2, 0.05],
+                xlim=[-0.2, 0.1],   # Reduced range, favor left side for single arm
+                ylim=[-0.15, 0.05], # Adjusted y range for single arm
                 qpos=[0.707, 0.707, 0.0, 0.0],
                 rotate_rand=True,
                 rotate_lim=[0, np.pi / 4, 0],
@@ -49,12 +57,12 @@ class place_bread_basket(Base_Task):
                     try_num = -1
                     break
                 try_num0 = 0
-                while (abs(rand_pos.p[0]) < 0.15 or ((rand_pos.p[0] - breadbasket_pose.p[0])**2 +
+                while (abs(rand_pos.p[0]) < 0.1 or ((rand_pos.p[0] - breadbasket_pose.p[0])**2 +
                                                      (rand_pos.p[1] - breadbasket_pose.p[1])**2) < 0.01):
                     try_num0 += 1
                     rand_pos = rand_pose(
-                        xlim=[-0.27, 0.27],
-                        ylim=[-0.2, 0.05],
+                        xlim=[-0.2, 0.1],   # Reduced range for single arm
+                        ylim=[-0.15, 0.05], # Adjusted y range for single arm
                         qpos=[0.707, 0.707, 0.0, 0.0],
                         rotate_rand=True,
                         rotate_lim=[0, np.pi / 4, 0],
@@ -90,14 +98,14 @@ class place_bread_basket(Base_Task):
         self.add_prohibit_area(self.breadbasket, padding=0.05)
 
     def play_once(self):
+        # Single arm task: always use left arm
+        arm_tag = ArmTag("right")
 
         def remove_bread(id, num):
-            arm_tag = ArmTag("right" if self.bread[id].get_pose().p[0] > 0 else "left")
-
-            # Grasp the bread
+            # Grasp the bread with left arm
             self.move(self.grasp_actor(self.bread[id], arm_tag=arm_tag, pre_grasp_dis=0.07))
             # Move up a little
-            self.move(self.move_by_displacement(arm_tag=arm_tag, z=0.1, move_axis="arm"))
+            self.move(self.move_by_displacement(arm_tag=arm_tag, z=0.3, move_axis="arm"))
 
             # Get bread basket's functional point as target pose
             breadbasket_pose = self.breadbasket.get_functional_point(0)
@@ -112,78 +120,30 @@ class place_bread_basket(Base_Task):
                 ))
             if num == 0:
                 # Move up further after placing first bread
-                self.move(self.move_by_displacement(arm_tag=arm_tag, z=0.15, move_axis="arm"))
+                self.move(self.move_by_displacement(arm_tag=arm_tag, z=0.3, move_axis="arm"))
             else:
                 # Open gripper to place the second bread
                 self.move(self.open_gripper(arm_tag=arm_tag))
 
-        def remove():
-            # Determine which bread is on the left
-            id = 0 if self.bread[0].get_pose().p[0] < 0 else 1
-
-            # Simultaneously grasp both breads with dual arms
-            self.move(
-                self.grasp_actor(self.bread[id], arm_tag="left", pre_grasp_dis=0.05),
-                self.grasp_actor(self.bread[id ^ 1], arm_tag="right", pre_grasp_dis=0.07),
-            )
-
-            # Lift both arms slightly after grasping
-            self.move(
-                self.move_by_displacement(arm_tag="left", z=0.05, move_axis="arm"),
-                self.move_by_displacement(arm_tag="right", z=0.05, move_axis="arm"),
-            )
-
-            breadbasket_pose = self.breadbasket.get_functional_point(0)
-            # Place first bread into the basket using left arm
-            self.move(
-                self.place_actor(
-                    self.bread[id],
-                    arm_tag="left",
-                    target_pose=breadbasket_pose,
-                    constrain="free",
-                    pre_dis=0.13,
-                ))
-            # Move left arm up a little
-            self.move(self.move_by_displacement(arm_tag="left", z=0.1, move_axis="arm"))
-
-            # Move left arm away while placing second bread with right arm, avoiding collision
-            self.move(
-                self.back_to_origin(arm_tag="left"),
-                self.place_actor(
-                    self.bread[id ^ 1],
-                    arm_tag="right",
-                    target_pose=breadbasket_pose,
-                    constrain="free",
-                    pre_dis=0.13,
-                    dis=0.05,  # Move right arm slightly away to avoid collision
-                ),
-            )
-
-        arm_info = None
-        # Check if there's only one bread or both are on the same side
-        if (len(self.bread) <= 1 or (self.bread[0].get_pose().p[0] * self.bread[1].get_pose().p[0]) > 0):
-            if len(self.bread) == 1:
-                # Handle single bread case
-                remove_bread(0, 0)
-                arm_info = "left" if self.bread[0].get_pose().p[0] < 0 else "right"
-            else:
-                # When two breads are present but on the same side, pick the front one first
-                id = (0 if self.bread[0].get_pose().p[1] < self.bread[1].get_pose().p[1] else 1)
-                arm_info = "left" if self.bread[0].get_pose().p[0] < 0 else "right"
-                remove_bread(id, 0)
-                remove_bread(id ^ 1, 1)
+        arm_info = "left"
+        # Single arm: process breads sequentially
+        if len(self.bread) == 1:
+            # Handle single bread case
+            remove_bread(0, 0)
         else:
-            # Dual-arm removal when breads are on opposite sides
-            remove()
-            arm_info = "dual"
+            # When two breads are present, pick the one closer to left arm first (or front one)
+            # Prioritize by y position (front first) or x position (left first)
+            id = (0 if self.bread[0].get_pose().p[1] < self.bread[1].get_pose().p[1] else 1)
+            remove_bread(id, 0)
+            remove_bread(id ^ 1, 1)
 
         self.info["info"] = {
-            "{A}": f"076_breadbasket/base{self.basket_id}",
-            "{B}": f"075_bread/base{self.bread_id[0]}",
+            "{A}": f"076_breadbasket/base0",
+            "{B}": f"075_bread/base0",
             "{a}": arm_info,
         }
         if len(self.bread) == 2:
-            self.info["info"]["{C}"] = f"075_bread/base{self.bread_id[1]}"
+            self.info["info"]["{C}"] = f"075_bread/base0"
 
         return self.info
 
@@ -199,4 +159,5 @@ class place_bread_basket(Base_Task):
             else:
                 check = False
 
-        return (check and self.robot.is_left_gripper_open() and self.robot.is_right_gripper_open())
+        # Single arm: only check left gripper
+        return (check and self.robot.is_left_gripper_open())

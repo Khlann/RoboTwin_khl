@@ -32,6 +32,10 @@ class GLBOrientationAdjuster:
         self.rotation_y = 0.0  # 绕 Y 轴旋转（度）
         self.rotation_z = 0.0  # 绕 Z 轴旋转（度）
         
+        self.translation_x = 0.0  # X 轴平移（米）
+        self.translation_y = 0.0  # Y 轴平移（米）
+        self.translation_z = 0.0  # Z 轴平移（米）
+        
         self.load_mesh()
     
     def load_mesh(self):
@@ -82,8 +86,8 @@ class GLBOrientationAdjuster:
         except Exception as e:
             raise ValueError(f"加载 GLB 文件失败: {e}")
     
-    def apply_rotation(self, mesh=None):
-        """应用旋转变换"""
+    def apply_transform(self, mesh=None):
+        """应用旋转和平移变换"""
         if mesh is None:
             mesh = self.mesh.copy()
         
@@ -101,17 +105,29 @@ class GLBOrientationAdjuster:
         # 组合旋转矩阵
         R = trimesh.transformations.concatenate_matrices(Rz, Ry, Rx)
         
+        # 创建平移矩阵
+        T_translation = trimesh.transformations.translation_matrix([
+            self.translation_x,
+            self.translation_y,
+            self.translation_z
+        ])
+        
         # 应用旋转（相对于中心点）
         center = mesh.centroid
         T_center = trimesh.transformations.translation_matrix(-center)
         T_back = trimesh.transformations.translation_matrix(center)
         
+        # 组合变换：先旋转（相对于中心），再平移
         transform = trimesh.transformations.concatenate_matrices(
-            T_back, R, T_center
+            T_translation, T_back, R, T_center
         )
         
         mesh.apply_transform(transform)
         return mesh
+    
+    def apply_rotation(self, mesh=None):
+        """应用旋转变换（保持向后兼容）"""
+        return self.apply_transform(mesh)
     
     def visualize_with_open3d(self):
         """使用 Open3D 进行交互式可视化"""
@@ -128,27 +144,34 @@ class GLBOrientationAdjuster:
         print("  - Q/A: 绕 X 轴旋转 +/-5°")
         print("  - W/S: 绕 Y 轴旋转 +/-5°")
         print("  - E/D: 绕 Z 轴旋转 +/-5°")
-        print("  - Shift+Q/A: 绕 X 轴旋转 +/-1°")
-        print("  - Shift+W/S: 绕 Y 轴旋转 +/-1°")
-        print("  - Shift+E/D: 绕 Z 轴旋转 +/-1°")
+        print("  - 1/2: 绕 X 轴旋转 +/-1°（精细调整）")
+        print("  - 3/4: 绕 Y 轴旋转 +/-1°（精细调整）")
+        print("  - 5/6: 绕 Z 轴旋转 +/-1°（精细调整）")
+        print("\n平移调整快捷键:")
+        print("  - I/K: X 轴平移 +/-0.01m")
+        print("  - J/L: Y 轴平移 +/-0.01m")
+        print("  - U/O: Z 轴平移 +/-0.01m")
+        print("  - Shift+I/K: X 轴平移 +/-0.001m（精细调整）")
+        print("  - Shift+J/L: Y 轴平移 +/-0.001m（精细调整）")
+        print("  - Shift+U/O: Z 轴平移 +/-0.001m（精细调整）")
         print("\n其他快捷键:")
         print("  - R: 重置视角")
         print("  - 0: 重置所有旋转角度为 0")
-        print("  - P: 打印当前旋转角度")
-        print("  - 空格: 保存当前旋转并退出")
-        print("  - ESC/Q: 退出不保存")
-        print("\n当前旋转角度:")
-        print(f"  X轴: {self.rotation_x:.1f}°")
-        print(f"  Y轴: {self.rotation_y:.1f}°")
-        print(f"  Z轴: {self.rotation_z:.1f}°")
+        print("  - T: 重置所有平移为 0")
+        print("  - P: 打印当前旋转和平移")
+        print("  - 空格: 保存当前变换并退出")
+        print("  - ESC: 退出不保存")
+        print("\n当前变换:")
+        print(f"  旋转: X={self.rotation_x:.1f}° Y={self.rotation_y:.1f}° Z={self.rotation_z:.1f}°")
+        print(f"  平移: X={self.translation_x:.4f}m Y={self.translation_y:.4f}m Z={self.translation_z:.4f}m")
         
         # 创建 Open3D 可视化
         vis = o3d.visualization.VisualizerWithKeyCallback()
         window_name = f"GLB 方向调整: {self.glb_path.name}"
         vis.create_window(window_name=window_name, width=1024, height=768)
         
-        # 应用当前旋转
-        rotated_mesh = self.apply_rotation()
+        # 应用当前变换（旋转+平移）
+        rotated_mesh = self.apply_transform()
         
         # 转换为 Open3D 格式
         o3d_mesh = o3d.geometry.TriangleMesh()
@@ -241,13 +264,15 @@ class GLBOrientationAdjuster:
         save_and_exit = [False]
         rotation_step_large = 5.0
         rotation_step_small = 1.0
+        translation_step_large = 0.01  # 0.01 米
+        translation_step_small = 0.001  # 0.001 米（精细调整）
         
         # 注意：关闭窗口时也会正常退出，此时 save_and_exit[0] 仍为 False（不保存）
         
         def update_mesh():
             """更新网格显示"""
             nonlocal o3d_mesh, rotated_mesh
-            rotated_mesh = self.apply_rotation()
+            rotated_mesh = self.apply_transform()
             o3d_mesh.vertices = o3d.utility.Vector3dVector(rotated_mesh.vertices)
             # 重新计算法线
             o3d_mesh.compute_vertex_normals()
@@ -259,73 +284,147 @@ class GLBOrientationAdjuster:
         def rotate_x_plus(vis):
             self.rotation_x += rotation_step_large
             update_mesh()
-            print(f"旋转角度: X={self.rotation_x:.1f}° Y={self.rotation_y:.1f}° Z={self.rotation_z:.1f}°")
+            print(f"旋转: X={self.rotation_x:.1f}° Y={self.rotation_y:.1f}° Z={self.rotation_z:.1f}° | 平移: X={self.translation_x:.4f}m Y={self.translation_y:.4f}m Z={self.translation_z:.4f}m")
             return False
         
         def rotate_x_minus(vis):
             self.rotation_x -= rotation_step_large
             update_mesh()
-            print(f"旋转角度: X={self.rotation_x:.1f}° Y={self.rotation_y:.1f}° Z={self.rotation_z:.1f}°")
+            print(f"旋转: X={self.rotation_x:.1f}° Y={self.rotation_y:.1f}° Z={self.rotation_z:.1f}° | 平移: X={self.translation_x:.4f}m Y={self.translation_y:.4f}m Z={self.translation_z:.4f}m")
             return False
         
         def rotate_y_plus(vis):
             self.rotation_y += rotation_step_large
             update_mesh()
-            print(f"旋转角度: X={self.rotation_x:.1f}° Y={self.rotation_y:.1f}° Z={self.rotation_z:.1f}°")
+            print(f"旋转: X={self.rotation_x:.1f}° Y={self.rotation_y:.1f}° Z={self.rotation_z:.1f}° | 平移: X={self.translation_x:.4f}m Y={self.translation_y:.4f}m Z={self.translation_z:.4f}m")
             return False
         
         def rotate_y_minus(vis):
             self.rotation_y -= rotation_step_large
             update_mesh()
-            print(f"旋转角度: X={self.rotation_x:.1f}° Y={self.rotation_y:.1f}° Z={self.rotation_z:.1f}°")
+            print(f"旋转: X={self.rotation_x:.1f}° Y={self.rotation_y:.1f}° Z={self.rotation_z:.1f}° | 平移: X={self.translation_x:.4f}m Y={self.translation_y:.4f}m Z={self.translation_z:.4f}m")
             return False
         
         def rotate_z_plus(vis):
             self.rotation_z += rotation_step_large
             update_mesh()
-            print(f"旋转角度: X={self.rotation_x:.1f}° Y={self.rotation_y:.1f}° Z={self.rotation_z:.1f}°")
+            print(f"旋转: X={self.rotation_x:.1f}° Y={self.rotation_y:.1f}° Z={self.rotation_z:.1f}° | 平移: X={self.translation_x:.4f}m Y={self.translation_y:.4f}m Z={self.translation_z:.4f}m")
             return False
         
         def rotate_z_minus(vis):
             self.rotation_z -= rotation_step_large
             update_mesh()
-            print(f"旋转角度: X={self.rotation_x:.1f}° Y={self.rotation_y:.1f}° Z={self.rotation_z:.1f}°")
+            print(f"旋转: X={self.rotation_x:.1f}° Y={self.rotation_y:.1f}° Z={self.rotation_z:.1f}° | 平移: X={self.translation_x:.4f}m Y={self.translation_y:.4f}m Z={self.translation_z:.4f}m")
             return False
         
         def rotate_x_plus_small(vis):
             self.rotation_x += rotation_step_small
             update_mesh()
-            print(f"旋转角度: X={self.rotation_x:.1f}° Y={self.rotation_y:.1f}° Z={self.rotation_z:.1f}°")
+            print(f"旋转: X={self.rotation_x:.1f}° Y={self.rotation_y:.1f}° Z={self.rotation_z:.1f}° | 平移: X={self.translation_x:.4f}m Y={self.translation_y:.4f}m Z={self.translation_z:.4f}m")
             return False
         
         def rotate_x_minus_small(vis):
             self.rotation_x -= rotation_step_small
             update_mesh()
-            print(f"旋转角度: X={self.rotation_x:.1f}° Y={self.rotation_y:.1f}° Z={self.rotation_z:.1f}°")
+            print(f"旋转: X={self.rotation_x:.1f}° Y={self.rotation_y:.1f}° Z={self.rotation_z:.1f}° | 平移: X={self.translation_x:.4f}m Y={self.translation_y:.4f}m Z={self.translation_z:.4f}m")
             return False
         
         def rotate_y_plus_small(vis):
             self.rotation_y += rotation_step_small
             update_mesh()
-            print(f"旋转角度: X={self.rotation_x:.1f}° Y={self.rotation_y:.1f}° Z={self.rotation_z:.1f}°")
+            print(f"旋转: X={self.rotation_x:.1f}° Y={self.rotation_y:.1f}° Z={self.rotation_z:.1f}° | 平移: X={self.translation_x:.4f}m Y={self.translation_y:.4f}m Z={self.translation_z:.4f}m")
             return False
         
         def rotate_y_minus_small(vis):
             self.rotation_y -= rotation_step_small
             update_mesh()
-            print(f"旋转角度: X={self.rotation_x:.1f}° Y={self.rotation_y:.1f}° Z={self.rotation_z:.1f}°")
+            print(f"旋转: X={self.rotation_x:.1f}° Y={self.rotation_y:.1f}° Z={self.rotation_z:.1f}° | 平移: X={self.translation_x:.4f}m Y={self.translation_y:.4f}m Z={self.translation_z:.4f}m")
             return False
         
         def rotate_z_plus_small(vis):
             self.rotation_z += rotation_step_small
             update_mesh()
-            print(f"旋转角度: X={self.rotation_x:.1f}° Y={self.rotation_y:.1f}° Z={self.rotation_z:.1f}°")
+            print(f"旋转: X={self.rotation_x:.1f}° Y={self.rotation_y:.1f}° Z={self.rotation_z:.1f}° | 平移: X={self.translation_x:.4f}m Y={self.translation_y:.4f}m Z={self.translation_z:.4f}m")
             return False
         
         def rotate_z_minus_small(vis):
             self.rotation_z -= rotation_step_small
             update_mesh()
-            print(f"旋转角度: X={self.rotation_x:.1f}° Y={self.rotation_y:.1f}° Z={self.rotation_z:.1f}°")
+            print(f"旋转: X={self.rotation_x:.1f}° Y={self.rotation_y:.1f}° Z={self.rotation_z:.1f}° | 平移: X={self.translation_x:.4f}m Y={self.translation_y:.4f}m Z={self.translation_z:.4f}m")
+            return False
+        
+        # 平移调整函数
+        def translate_x_plus(vis):
+            self.translation_x += translation_step_large
+            update_mesh()
+            print(f"平移: X={self.translation_x:.4f}m Y={self.translation_y:.4f}m Z={self.translation_z:.4f}m")
+            return False
+        
+        def translate_x_minus(vis):
+            self.translation_x -= translation_step_large
+            update_mesh()
+            print(f"平移: X={self.translation_x:.4f}m Y={self.translation_y:.4f}m Z={self.translation_z:.4f}m")
+            return False
+        
+        def translate_y_plus(vis):
+            self.translation_y += translation_step_large
+            update_mesh()
+            print(f"平移: X={self.translation_x:.4f}m Y={self.translation_y:.4f}m Z={self.translation_z:.4f}m")
+            return False
+        
+        def translate_y_minus(vis):
+            self.translation_y -= translation_step_large
+            update_mesh()
+            print(f"平移: X={self.translation_x:.4f}m Y={self.translation_y:.4f}m Z={self.translation_z:.4f}m")
+            return False
+        
+        def translate_z_plus(vis):
+            self.translation_z += translation_step_large
+            update_mesh()
+            print(f"平移: X={self.translation_x:.4f}m Y={self.translation_y:.4f}m Z={self.translation_z:.4f}m")
+            return False
+        
+        def translate_z_minus(vis):
+            self.translation_z -= translation_step_large
+            update_mesh()
+            print(f"平移: X={self.translation_x:.4f}m Y={self.translation_y:.4f}m Z={self.translation_z:.4f}m")
+            return False
+        
+        # 精细平移调整函数
+        def translate_x_plus_small(vis):
+            self.translation_x += translation_step_small
+            update_mesh()
+            print(f"平移: X={self.translation_x:.4f}m Y={self.translation_y:.4f}m Z={self.translation_z:.4f}m")
+            return False
+        
+        def translate_x_minus_small(vis):
+            self.translation_x -= translation_step_small
+            update_mesh()
+            print(f"平移: X={self.translation_x:.4f}m Y={self.translation_y:.4f}m Z={self.translation_z:.4f}m")
+            return False
+        
+        def translate_y_plus_small(vis):
+            self.translation_y += translation_step_small
+            update_mesh()
+            print(f"平移: X={self.translation_x:.4f}m Y={self.translation_y:.4f}m Z={self.translation_z:.4f}m")
+            return False
+        
+        def translate_y_minus_small(vis):
+            self.translation_y -= translation_step_small
+            update_mesh()
+            print(f"平移: X={self.translation_x:.4f}m Y={self.translation_y:.4f}m Z={self.translation_z:.4f}m")
+            return False
+        
+        def translate_z_plus_small(vis):
+            self.translation_z += translation_step_small
+            update_mesh()
+            print(f"平移: X={self.translation_x:.4f}m Y={self.translation_y:.4f}m Z={self.translation_z:.4f}m")
+            return False
+        
+        def translate_z_minus_small(vis):
+            self.translation_z -= translation_step_small
+            update_mesh()
+            print(f"平移: X={self.translation_x:.4f}m Y={self.translation_y:.4f}m Z={self.translation_z:.4f}m")
             return False
         
         def reset_rotation(vis):
@@ -335,6 +434,15 @@ class GLBOrientationAdjuster:
             update_mesh()
             print("已重置所有旋转角度为 0")
             print(f"旋转角度: X={self.rotation_x:.1f}° Y={self.rotation_y:.1f}° Z={self.rotation_z:.1f}°")
+            return False
+        
+        def reset_translation(vis):
+            self.translation_x = 0.0
+            self.translation_y = 0.0
+            self.translation_z = 0.0
+            update_mesh()
+            print("已重置所有平移为 0")
+            print(f"平移: X={self.translation_x:.4f}m Y={self.translation_y:.4f}m Z={self.translation_z:.4f}m")
             return False
         
         def reset_view(vis):
@@ -349,8 +457,10 @@ class GLBOrientationAdjuster:
             print("视角已重置")
             return False
         
-        def print_rotation(vis):
-            print(f"\n当前旋转角度: X={self.rotation_x:.2f}°, Y={self.rotation_y:.2f}°, Z={self.rotation_z:.2f}°")
+        def print_transform(vis):
+            print(f"\n当前变换:")
+            print(f"  旋转: X={self.rotation_x:.2f}°, Y={self.rotation_y:.2f}°, Z={self.rotation_z:.2f}°")
+            print(f"  平移: X={self.translation_x:.4f}m, Y={self.translation_y:.4f}m, Z={self.translation_z:.4f}m")
             return False
         
         def save_and_quit(vis):
@@ -379,10 +489,27 @@ class GLBOrientationAdjuster:
         vis.register_key_callback(ord('5'), rotate_z_plus_small)   # Z轴 +1°
         vis.register_key_callback(ord('6'), rotate_z_minus_small)   # Z轴 -1°
         
+        # 注册键盘回调 - 平移调整
+        vis.register_key_callback(ord('I'), translate_x_plus)      # X轴 +0.01m
+        vis.register_key_callback(ord('K'), translate_x_minus)     # X轴 -0.01m
+        vis.register_key_callback(ord('J'), translate_y_plus)     # Y轴 +0.01m
+        vis.register_key_callback(ord('L'), translate_y_minus)     # Y轴 -0.01m
+        vis.register_key_callback(ord('U'), translate_z_plus)      # Z轴 +0.01m
+        vis.register_key_callback(ord('O'), translate_z_minus)     # Z轴 -0.01m
+        
+        # 注册键盘回调 - 精细平移调整（使用小写字母）
+        vis.register_key_callback(ord('i'), translate_x_plus_small)   # X轴 +0.001m
+        vis.register_key_callback(ord('k'), translate_x_minus_small)  # X轴 -0.001m
+        vis.register_key_callback(ord('j'), translate_y_plus_small)   # Y轴 +0.001m
+        vis.register_key_callback(ord('l'), translate_y_minus_small)  # Y轴 -0.001m
+        vis.register_key_callback(ord('u'), translate_z_plus_small)   # Z轴 +0.001m
+        vis.register_key_callback(ord('o'), translate_z_minus_small)  # Z轴 -0.001m
+        
         # 其他功能
         vis.register_key_callback(ord('R'), reset_view)        # 重置视角
         vis.register_key_callback(ord('0'), reset_rotation)    # 重置旋转
-        vis.register_key_callback(ord('P'), print_rotation)    # 打印角度
+        vis.register_key_callback(ord('T'), reset_translation) # 重置平移
+        vis.register_key_callback(ord('P'), print_transform)  # 打印变换信息
         vis.register_key_callback(ord(' '), save_and_quit)     # 空格：保存并退出
         vis.register_key_callback(27, quit_without_save)        # ESC：退出不保存
         
@@ -395,25 +522,24 @@ class GLBOrientationAdjuster:
     def visualize_with_trimesh(self):
         """使用 trimesh 进行简单可视化"""
         print("\n=== Trimesh 可视化 ===")
-        print("当前旋转角度:")
-        print(f"  X轴: {self.rotation_x:.1f}°")
-        print(f"  Y轴: {self.rotation_y:.1f}°")
-        print(f"  Z轴: {self.rotation_z:.1f}°")
+        print("当前变换:")
+        print(f"  旋转: X={self.rotation_x:.1f}° Y={self.rotation_y:.1f}° Z={self.rotation_z:.1f}°")
+        print(f"  平移: X={self.translation_x:.4f}m Y={self.translation_y:.4f}m Z={self.translation_z:.4f}m")
         
-        # 应用旋转
-        rotated_mesh = self.apply_rotation()
+        # 应用变换
+        transformed_mesh = self.apply_transform()
         
         # 显示
-        rotated_mesh.show()
+        transformed_mesh.show()
         
         return True
     
     def interactive_adjust(self):
-        """交互式调整旋转角度"""
-        print("\n=== 交互式旋转调整 ===")
+        """交互式调整旋转和平移"""
+        print("\n=== 交互式变换调整 ===")
         print("选择调整方式:")
         print("  1. 使用 Open3D 可视化窗口进行实时调整（推荐）")
-        print("  2. 在终端中输入旋转角度")
+        print("  2. 在终端中输入旋转和平移")
         print()
         
         if HAS_OPEN3D:
@@ -432,8 +558,9 @@ class GLBOrientationAdjuster:
     def _terminal_adjust(self):
         """终端输入方式调整"""
         print("\n=== 终端输入调整 ===")
-        print("输入旋转角度（度），格式: x y z")
-        print("例如: 90 0 0  (绕 X 轴旋转 90 度)")
+        print("输入旋转角度（度）和平移（米），格式: rx ry rz tx ty tz")
+        print("例如: 90 0 0 0.01 0 0  (绕 X 轴旋转 90 度，X 轴平移 0.01 米)")
+        print("也可以只输入旋转: rx ry rz")
         print("输入 'show' 查看当前效果")
         print("输入 'save' 保存并退出")
         print("输入 'quit' 退出不保存")
@@ -459,25 +586,39 @@ class GLBOrientationAdjuster:
                         self.visualize_with_trimesh()
                     continue
                 
-                # 解析旋转角度
+                # 解析旋转角度和平移
                 parts = cmd.split()
                 if len(parts) == 3:
+                    # 只输入旋转角度
                     self.rotation_x = float(parts[0])
                     self.rotation_y = float(parts[1])
                     self.rotation_z = float(parts[2])
                     print(f"设置旋转角度: X={self.rotation_x}°, Y={self.rotation_y}°, Z={self.rotation_z}°")
-                    
-                    # 询问是否查看
-                    view = input("是否查看效果? (y/n): ").strip().lower()
-                    if view == 'y':
-                        if HAS_OPEN3D:
-                            saved = self.visualize_with_open3d()
-                            if saved:
-                                return True
-                        else:
-                            self.visualize_with_trimesh()
+                elif len(parts) == 6:
+                    # 输入旋转和平移
+                    self.rotation_x = float(parts[0])
+                    self.rotation_y = float(parts[1])
+                    self.rotation_z = float(parts[2])
+                    self.translation_x = float(parts[3])
+                    self.translation_y = float(parts[4])
+                    self.translation_z = float(parts[5])
+                    print(f"设置变换:")
+                    print(f"  旋转: X={self.rotation_x}°, Y={self.rotation_y}°, Z={self.rotation_z}°")
+                    print(f"  平移: X={self.translation_x:.4f}m, Y={self.translation_y:.4f}m, Z={self.translation_z:.4f}m")
                 else:
-                    print("格式错误，请输入三个数字，例如: 90 0 0")
+                    print("格式错误，请输入三个数字（旋转）或六个数字（旋转+平移）")
+                    print("例如: 90 0 0  或  90 0 0 0.01 0 0")
+                    continue
+                
+                # 询问是否查看
+                view = input("是否查看效果? (y/n): ").strip().lower()
+                if view == 'y':
+                    if HAS_OPEN3D:
+                        saved = self.visualize_with_open3d()
+                        if saved:
+                            return True
+                    else:
+                        self.visualize_with_trimesh()
                     
             except KeyboardInterrupt:
                 print("\n退出，未保存更改")
@@ -493,23 +634,23 @@ class GLBOrientationAdjuster:
         else:
             output_path = Path(output_path)
         
-        # 应用旋转
-        rotated_mesh = self.apply_rotation()
+        # 应用变换（旋转+平移）
+        transformed_mesh = self.apply_transform()
         
         # 创建场景
-        scene = trimesh.Scene([rotated_mesh])
+        scene = trimesh.Scene([transformed_mesh])
         
         # 导出为 GLB
         print(f"\n{'='*60}")
-        print(f"正在保存旋转后的 GLB 文件...")
+        print(f"正在保存变换后的 GLB 文件...")
         print(f"原始文件: {self.glb_path}")
         print(f"保存位置: {output_path.absolute()}")
         print(f"{'='*60}")
         scene.export(str(output_path))
         print(f"✓ GLB 文件已成功保存!")
         
-        # 保存旋转信息到 JSON
-        rotation_info = {
+        # 保存变换信息到 JSON
+        transform_info = {
             "original_file": str(self.glb_path.absolute()),
             "output_file": str(output_path.absolute()),
             "rotation_degrees": {
@@ -521,13 +662,18 @@ class GLBOrientationAdjuster:
                 "x": np.radians(self.rotation_x),
                 "y": np.radians(self.rotation_y),
                 "z": np.radians(self.rotation_z)
+            },
+            "translation_meters": {
+                "x": self.translation_x,
+                "y": self.translation_y,
+                "z": self.translation_z
             }
         }
         
-        info_path = output_path.parent / f"{output_path.stem}_rotation_info.json"
+        info_path = output_path.parent / f"{output_path.stem}_transform_info.json"
         with open(info_path, 'w', encoding='utf-8') as f:
-            json.dump(rotation_info, f, indent=2, ensure_ascii=False)
-        print(f"✓ 旋转信息已保存到: {info_path.absolute()}")
+            json.dump(transform_info, f, indent=2, ensure_ascii=False)
+        print(f"✓ 变换信息已保存到: {info_path.absolute()}")
         print(f"{'='*60}\n")
         
         return output_path

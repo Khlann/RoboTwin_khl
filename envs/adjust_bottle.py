@@ -32,7 +32,8 @@ class adjust_bottle(Base_Task):
         self.delay(4)
         self.add_prohibit_area(self.bottle, padding=0.15)
         # Single arm: only left target pose, adjusted for single arm reach
-        self.target_pose = [-0.15, -0.12, 0.95, 0, 1, 0, 0]  # Closer to center for single arm
+        # Closer to center for single arm workspace
+        self.target_pose = [-0.15, -0.12, 0.95, 0, 1, 0, 0]
 
     def play_once(self):
         # Single arm task: always use left arm
