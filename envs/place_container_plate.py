@@ -1,6 +1,8 @@
 from ._base_task import Base_Task
 from .utils import *
 import sapien
+import json
+import os
 
 
 class place_container_plate(Base_Task):
@@ -9,6 +11,24 @@ class place_container_plate(Base_Task):
         super()._init_task_env_(**kwags)
 
     def load_actors(self):
+        slots_json = os.getenv("ROBOTWIN_FORCE_SLOTS_JSON", "").strip()
+        if slots_json:
+            try:
+                slots = json.loads(slots_json)
+                if isinstance(slots, list):
+                    for item in slots:
+                        if not isinstance(item, dict):
+                            continue
+                        mn = str(item.get("modelname", "")).strip()
+                        mid = int(item.get("model_id"))
+                        if mn == "003_plate":
+                            self.plate_id = mid
+                        elif mn in ("002_bowl", "021_cup"):
+                            self.actor_name = mn
+                            self.container_id = mid
+            except Exception:
+                pass
+
         container_pose = rand_pose(
             xlim=[-0.28, 0.28],
             ylim=[-0.1, 0.05],
@@ -23,8 +43,10 @@ class place_container_plate(Base_Task):
                 qpos=[0.5, 0.5, 0.5, 0.5],
             )
         id_list = {"002_bowl": [1, 2, 3, 5], "021_cup": [1, 2, 3, 4, 5, 6, 7]}
-        self.actor_name = np.random.choice(["002_bowl", "021_cup"])
-        self.container_id = np.random.choice(id_list[self.actor_name])
+        if not getattr(self, "actor_name", None):
+            self.actor_name = np.random.choice(["002_bowl", "021_cup"])
+        if getattr(self, "container_id", None) is None:
+            self.container_id = np.random.choice(id_list[self.actor_name])
         self.container = create_actor(
             self,
             pose=container_pose,
@@ -34,7 +56,8 @@ class place_container_plate(Base_Task):
         )
 
         x = 0.05 if self.container.get_pose().p[0] > 0 else -0.05
-        self.plate_id = 0
+        if not hasattr(self, "plate_id"):
+            self.plate_id = 0
         pose = rand_pose(
             xlim=[x - 0.03, x + 0.03],
             ylim=[-0.15, -0.1],
@@ -45,6 +68,7 @@ class place_container_plate(Base_Task):
             self,
             pose=pose,
             modelname="003_plate",
+            model_id=self.plate_id,
             scale=[0.025, 0.025, 0.025],
             is_static=True,
             convex=True,

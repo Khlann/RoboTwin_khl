@@ -4,8 +4,54 @@ import sapien
 import math
 from ._GLOBAL_CONFIGS import *
 from copy import deepcopy
+import json
+import os
 import time
 import numpy as np
+
+
+def _stamp_seal_forced_slot_a() -> tuple[int | None, dict | None]:
+    """Parse ROBOTWIN_FORCE_SLOTS_JSON for slot A (100_seal + optional attrs from metadata bridge)."""
+    raw = os.getenv("ROBOTWIN_FORCE_SLOTS_JSON", "").strip()
+    if not raw:
+        return None, None
+    try:
+        slots = json.loads(raw)
+    except (json.JSONDecodeError, TypeError):
+        return None, None
+    if not isinstance(slots, list):
+        return None, None
+    seal_id = None
+    attrs: dict | None = None
+    for it in slots:
+        if not isinstance(it, dict):
+            continue
+        if str(it.get("slot", "")).strip() != "A":
+            continue
+        if str(it.get("modelname", "")).strip() == "100_seal":
+            try:
+                seal_id = int(it["model_id"])
+            except (TypeError, ValueError, KeyError):
+                pass
+        a = it.get("attrs")
+        if isinstance(a, dict) and a:
+            attrs = dict(a)
+    return seal_id, attrs
+
+
+def _rgb01_from_hex_string(s: str) -> tuple[float, float, float] | None:
+    t = str(s).strip()
+    if t.startswith("#"):
+        t = t[1:]
+    if len(t) != 6:
+        return None
+    try:
+        r = int(t[0:2], 16) / 255.0
+        g = int(t[2:4], 16) / 255.0
+        b = int(t[4:6], 16) / 255.0
+    except ValueError:
+        return None
+    return (r, g, b)
 
 
 class stamp_seal(Base_Task):
@@ -28,7 +74,12 @@ class stamp_seal(Base_Task):
                 rotate_rand=False,
             )
 
-        self.seal_id = np.random.choice([0, 2, 3, 4, 6], 1)[0]
+        forced_id, forced_attrs = _stamp_seal_forced_slot_a()
+        allowed_seal = {0, 2, 3, 4, 6}
+        if forced_id is not None and forced_id in allowed_seal:
+            self.seal_id = forced_id
+        else:
+            self.seal_id = int(np.random.choice([0, 2, 3, 4, 6], 1)[0])
 
         self.seal = create_actor(
             scene=self,
@@ -84,9 +135,17 @@ class stamp_seal(Base_Task):
             "Silver": (0.75, 0.75, 0.75),
         }
 
-        color_items = list(colors.items())
-        idx = np.random.choice(len(color_items))
-        self.color_name, self.color_value = color_items[idx]
+        hex_from_meta = None
+        if forced_attrs and isinstance(forced_attrs.get("seal_color"), str):
+            hex_from_meta = forced_attrs["seal_color"].strip()
+        rgb = _rgb01_from_hex_string(hex_from_meta) if hex_from_meta else None
+        if rgb is not None:
+            self.color_name = hex_from_meta if hex_from_meta.startswith("#") else f"#{hex_from_meta}"
+            self.color_value = rgb
+        else:
+            color_items = list(colors.items())
+            idx = np.random.choice(len(color_items))
+            self.color_name, self.color_value = color_items[idx]
 
         half_size = [0.035, 0.035, 0.0005]
         self.target = create_visual_box(

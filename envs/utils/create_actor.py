@@ -5,6 +5,7 @@ import transforms3d as t3d
 import sapien.physx as sapienp
 import json
 import os, re
+from functools import lru_cache
 
 from .actor_utils import Actor, ArticulationActor
 
@@ -13,6 +14,196 @@ class UnStableError(Exception):
 
     def __init__(self, msg):
         super().__init__(msg)
+
+
+# (task_name, modelname) -> next index into sorted slot entries for duplicate modelnames (e.g. two bottles).
+_slot_cursor: dict[tuple[str, str], int] = {}
+
+
+def reset_robotwin_force_slot_cursor() -> None:
+    """Call once per episode before load_actors (see Base_Task._init_task_env_)."""
+    _slot_cursor.clear()
+
+
+def _force_task_name() -> str:
+    return os.getenv("ROBOTWIN_FORCE_TASK_NAME", "").strip()
+
+
+def _infer_asset_kind(modelname: str) -> str:
+    if _list_urdf_real_ids(modelname) and not _list_mesh_variant_ids(modelname):
+        return "urdf"
+    return "mesh"
+
+
+# Per-task mesh id allowlists (must match envs/* load_actors sampling). None = all disk variants.
+_TASK_MESH_ALLOW: dict[tuple[str, str], list[int] | None] = {
+    ("pick_diverse_bottles", "001_bottle"): list(range(20)),
+    ("pick_dual_bottles", "001_bottle"): None,
+    ("move_can_pot", "105_sauce-can"): [0, 2, 4, 5, 6],
+    ("place_can_basket", "071_can"): [0, 1, 2, 3, 5, 6],
+    ("place_can_basket", "110_basket"): [0, 1],
+    ("place_object_basket", "081_playingcards"): [0, 1, 2],
+    ("place_object_basket", "057_toycar"): [0, 1, 2, 3, 4, 5],
+    ("place_object_basket", "110_basket"): [0, 1],
+    ("place_cans_plasticbox", "071_can"): [0, 1, 2, 3, 5, 6],
+    ("place_cans_plasticbox", "062_plasticbox"): [3, 5],
+    ("place_bread_basket", "075_bread"): [0, 1, 3, 5, 6],
+    ("place_bread_basket", "076_breadbasket"): [0, 1, 2, 3, 4],
+    ("place_bread_skillet", "075_bread"): [0, 1, 3, 5, 6],
+    ("place_bread_skillet", "106_skillet"): [0, 1, 2, 3],
+    ("place_burger_fries", "008_tray"): [0, 1, 2, 3],
+    ("place_burger_fries", "006_hamburg"): [0, 1, 2, 3, 4, 5],
+    ("place_burger_fries", "005_french-fries"): [0, 1],
+    ("place_dual_shoes", "041_shoe"): list(range(10)),
+    ("place_phone_stand", "077_phone"): [0, 1, 2, 4],
+    ("place_phone_stand", "078_phonestand"): [1, 2],
+    ("scan_object", "024_scanner"): [0, 1, 2, 3, 4],
+    ("scan_object", "112_tea-box"): [0, 1, 2, 3, 4, 5],
+    ("place_container_plate", "002_bowl"): [1, 2, 3, 5],
+    ("place_container_plate", "021_cup"): [1, 2, 3, 4, 5, 6, 7],
+    ("place_container_plate", "003_plate"): [0],
+    ("place_empty_cup", "021_cup"): [0],
+    ("place_empty_cup", "019_coaster"): [0],
+    ("place_object_scale", "072_electronicscale"): [0, 1, 5, 6],
+    ("stamp_seal", "100_seal"): [0, 2, 3, 4, 6],
+    ("place_fan", "099_fan"): [4, 5],
+    ("place_mouse_pad", "047_mouse"): [0, 1, 2],
+    ("move_stapler_pad", "048_stapler"): [0, 1, 2, 3, 4, 5, 6],
+    ("place_object_stand", "074_displaystand"): [0, 1, 2, 3, 4],
+}
+
+
+def _mesh_allowlist(task: str, modelname: str) -> list[int] | None:
+    return _TASK_MESH_ALLOW.get((task, modelname))
+
+
+def _consume_slot_model_id(modelname: str) -> int | None:
+    """
+    When multiple slots use the same modelname, return model_id in slot order A,B,C,...
+    """
+    task = _force_task_name()
+    slots_json = os.getenv("ROBOTWIN_FORCE_SLOTS_JSON", "").strip()
+    if not slots_json or not task:
+        return None
+    try:
+        slots = json.loads(slots_json)
+        if not isinstance(slots, list):
+            return None
+    except Exception:
+        return None
+    matches = [s for s in slots if isinstance(s, dict) and str(s.get("modelname", "")).strip() == modelname]
+    if not matches:
+        return None
+    matches.sort(key=lambda s: str(s.get("slot", "")))
+    key = (task, modelname)
+    idx = _slot_cursor.get(key, 0)
+    if idx >= len(matches):
+        return None
+    raw = int(matches[idx]["model_id"])
+    _slot_cursor[key] = idx + 1
+    return raw
+
+
+def _apply_forced_model_id(modelname: str, model_id):
+    """
+    Optional runtime override for dataset bridge scripts (slots JSON + legacy env).
+    Applies map_forced_model_id for URDF index vs real id and sparse mesh allowlists.
+    """
+    task = _force_task_name()
+    raw = _consume_slot_model_id(modelname)
+    if raw is not None:
+        kind = _infer_asset_kind(modelname)
+        allow = _mesh_allowlist(task, modelname) if kind == "mesh" else None
+        mapped = map_forced_model_id(modelname, raw, kind=kind, allowed_ids=allow)
+        if mapped is not None:
+            return mapped
+
+    force_name = os.getenv("ROBOTWIN_FORCE_MODEL_NAME", "").strip()
+    force_id = os.getenv("ROBOTWIN_FORCE_MODEL_ID", "").strip()
+    if force_name == modelname and force_id:
+        try:
+            raw_legacy = int(force_id)
+        except Exception:
+            return model_id
+        kind = _infer_asset_kind(modelname)
+        allow = _mesh_allowlist(task, modelname) if kind == "mesh" else None
+        mapped = map_forced_model_id(modelname, raw_legacy, kind=kind, allowed_ids=allow)
+        return mapped if mapped is not None else model_id
+
+    return model_id
+
+
+@lru_cache(maxsize=256)
+def _list_urdf_real_ids(modelname: str) -> tuple[int, ...]:
+    modeldir = Path("assets") / "objects" / modelname
+    if not modeldir.exists():
+        return tuple()
+    ids = []
+    for sub in modeldir.iterdir():
+        if sub.is_dir() and sub.name.isdigit() and sub.name != "visual":
+            ids.append(int(sub.name))
+    return tuple(sorted(ids))
+
+
+@lru_cache(maxsize=256)
+def _list_mesh_variant_ids(modelname: str) -> tuple[int, ...]:
+    modeldir = Path("assets") / "objects" / modelname
+    if not modeldir.exists():
+        return tuple()
+    ids = []
+    for p in sorted(modeldir.glob("model_data*.json")):
+        if p.name == "model_data.json":
+            ids.append(0)
+            continue
+        m = re.match(r"model_data(\d+)\.json$", p.name)
+        if m:
+            ids.append(int(m.group(1)))
+    return tuple(sorted(set(ids)))
+
+
+def map_forced_model_id(
+    modelname: str,
+    model_id: int | None,
+    *,
+    kind: str,
+    allowed_ids: list[int] | None = None,
+) -> int | None:
+    """
+    Generic mapper for "forced id" compatibility.
+    - URDF tasks often use index ids (0..N-1), while metadata stores real folder ids (e.g. 100015).
+    - Mesh tasks may use sparse real ids (e.g. [0,2,4,5,6]); optionally support index input.
+    """
+    if model_id is None:
+        return None
+    try:
+        mid = int(model_id)
+    except Exception:
+        return model_id
+
+    if kind == "urdf":
+        real_ids = list(_list_urdf_real_ids(modelname))
+        if not real_ids:
+            return mid
+        if 0 <= mid < len(real_ids):
+            return mid
+        if mid in real_ids:
+            return real_ids.index(mid)
+        return mid
+
+    if kind == "mesh":
+        ids = list(_list_mesh_variant_ids(modelname))
+        if allowed_ids is not None:
+            allowed = set(int(x) for x in allowed_ids)
+            ids = [x for x in ids if x in allowed]
+        if not ids:
+            return mid
+        if mid in ids:
+            return mid
+        if 0 <= mid < len(ids):
+            return ids[mid]
+        return mid
+
+    return mid
 
 
 def preprocess(scene, pose: sapien.Pose) -> tuple[sapien.Scene, sapien.Pose]:
@@ -508,6 +699,7 @@ def create_actor(
         model_id=0,
 ) -> Actor:
     scene, pose = preprocess(scene, pose)
+    model_id = _apply_forced_model_id(modelname, model_id)
     modeldir = Path("assets/objects") / modelname
 
     if model_id is None:
@@ -593,6 +785,7 @@ def create_sapien_urdf_obj(
     fix_root_link=False,
 ) -> ArticulationActor:
     scene, pose = preprocess(scene, pose)
+    modelid = _apply_forced_model_id(modelname, modelid)
 
     modeldir = Path("assets") / "objects" / modelname
     if modelid is not None:

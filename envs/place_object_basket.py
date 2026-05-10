@@ -1,3 +1,6 @@
+import json
+import os
+
 from ._base_task import Base_Task
 from .utils import *
 import sapien
@@ -12,13 +15,48 @@ class place_object_basket(Base_Task):
     def load_actors(self):
         self.arm_tag = ArmTag({0: "left", 1: "right"}[np.random.randint(0, 2)])
         self.basket_name = "110_basket"
-        self.basket_id = np.random.randint(0, 2)
         toycar_dict = {
             "081_playingcards": [0, 1, 2],
             "057_toycar": [0, 1, 2, 3, 4, 5],
         }
-        self.object_name = ["081_playingcards", "057_toycar"][np.random.randint(0, 2)]
-        self.object_id = toycar_dict[self.object_name][np.random.randint(0, len(toycar_dict[self.object_name]))]
+
+        def parse_forced_slots_ab():
+            raw = os.getenv("ROBOTWIN_FORCE_SLOTS_JSON", "").strip()
+            if not raw:
+                return None
+            try:
+                slots = json.loads(raw)
+                if not isinstance(slots, list):
+                    return None
+                by_slot = {}
+                for it in slots:
+                    if not isinstance(it, dict):
+                        continue
+                    sn = str(it.get("slot", "")).strip()
+                    if sn:
+                        by_slot[sn] = it
+                if "A" not in by_slot or "B" not in by_slot:
+                    return None
+                a, b = by_slot["A"], by_slot["B"]
+                obj_name = str(a.get("modelname", "")).strip()
+                obj_id = int(a["model_id"])
+                b_name = str(b.get("modelname", "")).strip()
+                b_id = int(b["model_id"])
+                if b_name != "110_basket" or b_id not in (0, 1):
+                    return None
+                if obj_name not in toycar_dict or obj_id not in toycar_dict[obj_name]:
+                    return None
+                return obj_name, obj_id, b_id
+            except (TypeError, ValueError, KeyError):
+                return None
+
+        forced = parse_forced_slots_ab()
+        if forced:
+            self.object_name, self.object_id, self.basket_id = forced
+        else:
+            self.basket_id = np.random.randint(0, 2)
+            self.object_name = ["081_playingcards", "057_toycar"][np.random.randint(0, 2)]
+            self.object_id = toycar_dict[self.object_name][np.random.randint(0, len(toycar_dict[self.object_name]))]
         if self.arm_tag == "left":  # toycar on left
             self.basket = rand_create_actor(
                 scene=self,

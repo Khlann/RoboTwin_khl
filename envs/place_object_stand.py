@@ -3,7 +3,51 @@ from .utils import *
 import sapien
 import math
 import glob
+import json
+import os
 from copy import deepcopy
+
+
+def _parse_forced_slots_ab() -> tuple[tuple[str, int] | None, int | None]:
+    """
+    Parse ROBOTWIN_FORCE_SLOTS_JSON for place_object_stand:
+    - slot A: object modelname/model_id
+    - slot B: 074_displaystand/model_id
+    """
+    raw = os.getenv("ROBOTWIN_FORCE_SLOTS_JSON", "").strip()
+    if not raw:
+        return None, None
+    try:
+        slots = json.loads(raw)
+    except (json.JSONDecodeError, TypeError):
+        return None, None
+    if not isinstance(slots, list):
+        return None, None
+    by_slot: dict[str, dict] = {}
+    for it in slots:
+        if not isinstance(it, dict):
+            continue
+        sn = str(it.get("slot", "")).strip()
+        if sn:
+            by_slot[sn] = it
+    forced_a = None
+    forced_b = None
+    if "A" in by_slot:
+        a = by_slot["A"]
+        try:
+            forced_a = (str(a.get("modelname", "")).strip(), int(a.get("model_id")))
+        except (TypeError, ValueError):
+            forced_a = None
+    if "B" in by_slot:
+        b = by_slot["B"]
+        try:
+            b_name = str(b.get("modelname", "")).strip()
+            b_id = int(b.get("model_id"))
+            if b_name == "074_displaystand":
+                forced_b = b_id
+        except (TypeError, ValueError):
+            forced_b = None
+    return forced_a, forced_b
 
 
 class place_object_stand(Base_Task):
@@ -51,11 +95,33 @@ class place_object_stand(Base_Task):
             "057_toycar",
             "079_remotecontrol",
         ]
-        self.selected_modelname = np.random.choice(object_list)
+
+        forced_a, forced_b = _parse_forced_slots_ab()
+        if forced_a and forced_a[0] in object_list:
+            forced_name = forced_a[0]
+            forced_id = forced_a[1]
+            forced_ids = get_available_model_ids(forced_name)
+            if forced_ids and forced_id in forced_ids:
+                self.selected_modelname = forced_name
+                self.selected_model_id = forced_id
+            else:
+                self.selected_modelname = np.random.choice(object_list)
+                available_model_ids = get_available_model_ids(self.selected_modelname)
+                if not available_model_ids:
+                    raise ValueError(f"No available model_data.json files found for {self.selected_modelname}")
+                self.selected_model_id = np.random.choice(available_model_ids)
+        else:
+            self.selected_modelname = np.random.choice(object_list)
+            available_model_ids = get_available_model_ids(self.selected_modelname)
+            if not available_model_ids:
+                raise ValueError(f"No available model_data.json files found for {self.selected_modelname}")
+            self.selected_model_id = np.random.choice(available_model_ids)
+
         available_model_ids = get_available_model_ids(self.selected_modelname)
         if not available_model_ids:
             raise ValueError(f"No available model_data.json files found for {self.selected_modelname}")
-        self.selected_model_id = np.random.choice(available_model_ids)
+        if self.selected_model_id not in available_model_ids:
+            self.selected_model_id = np.random.choice(available_model_ids)
         self.object = create_actor(
             scene=self,
             pose=rand_pos,
@@ -86,7 +152,10 @@ class place_object_stand(Base_Task):
                 rotate_lim=[0, np.pi / 6, 0],
             )
         id_list = [0, 1, 2, 3, 4]
-        self.displaystand_id = np.random.choice(id_list)
+        if forced_b is not None and forced_b in id_list:
+            self.displaystand_id = forced_b
+        else:
+            self.displaystand_id = np.random.choice(id_list)
         self.displaystand = create_actor(
             scene=self,
             pose=target_rand_pos,

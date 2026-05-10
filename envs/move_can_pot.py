@@ -3,6 +3,8 @@ from .utils import *
 import sapien
 import math
 from copy import deepcopy
+import os
+import json
 
 
 class move_can_pot(Base_Task):
@@ -11,7 +13,34 @@ class move_can_pot(Base_Task):
         super()._init_task_env_(**kwargs)
 
     def load_actors(self):
-        self.pot_id = np.random.randint(0, 7)
+        def _forced_id(modelname: str):
+            slots_json = os.getenv("ROBOTWIN_FORCE_SLOTS_JSON", "").strip()
+            if slots_json:
+                try:
+                    slots = json.loads(slots_json)
+                    if isinstance(slots, list):
+                        slots_sorted = sorted(slots, key=lambda x: str(x.get("slot", "")))
+                        for it in slots_sorted:
+                            if isinstance(it, dict) and str(it.get("modelname", "")) == modelname:
+                                return int(it.get("model_id"))
+                except Exception:
+                    pass
+            # Legacy fallback
+            force_name = os.getenv("ROBOTWIN_FORCE_MODEL_NAME", "").strip()
+            force_id = os.getenv("ROBOTWIN_FORCE_MODEL_ID", "").strip()
+            if force_name == modelname and force_id:
+                try:
+                    return int(force_id)
+                except Exception:
+                    return None
+            return None
+
+        forced_pot = _forced_id("060_kitchenpot")
+        if forced_pot is not None:
+            self.pot_id = map_forced_model_id("060_kitchenpot", forced_pot, kind="urdf")
+        else:
+            self.pot_id = np.random.randint(0, 7)
+        print(f"pot_id(index): {self.pot_id}")
         self.pot = rand_create_sapien_urdf_obj(
             scene=self,
             modelname="060_kitchenpot",
@@ -40,7 +69,12 @@ class move_can_pot(Base_Task):
                 rotate_lim=[0, np.pi / 4, 0],
             )
         id_list = [0, 2, 4, 5, 6]
-        self.can_id = np.random.choice(id_list)
+        forced_can = _forced_id("105_sauce-can")
+        if forced_can is not None:
+            self.can_id = map_forced_model_id("105_sauce-can", forced_can, kind="mesh", allowed_ids=id_list)
+        else:
+            self.can_id = np.random.choice(id_list)
+        print(f"can_id(mapped): {self.can_id}")
         self.can = create_actor(
             scene=self,
             pose=rand_pos,

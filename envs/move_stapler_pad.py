@@ -1,9 +1,11 @@
 from ._base_task import Base_Task
 from .utils import *
+from .utils.metadata_bridge import parse_forced_slot_a, rgb01_from_hex
 import sapien
 import math
 from ._GLOBAL_CONFIGS import *
 from copy import deepcopy
+import numpy as np
 
 
 class move_stapler_pad(Base_Task):
@@ -27,7 +29,12 @@ class move_stapler_pad(Base_Task):
                 rotate_rand=True,
                 rotate_lim=[0, 3.14, 0],
             )
-        self.stapler_id = np.random.choice([0, 1, 2, 3, 4, 5, 6], 1)[0]
+        allowed_st = {0, 1, 2, 3, 4, 5, 6}
+        forced_id, forced_attrs = parse_forced_slot_a("048_stapler")
+        if forced_id is not None and forced_id in allowed_st:
+            self.stapler_id = int(forced_id)
+        else:
+            self.stapler_id = int(np.random.choice([0, 1, 2, 3, 4, 5, 6], 1)[0])
         self.stapler = create_actor(
             scene=self,
             pose=rand_pos,
@@ -66,9 +73,17 @@ class move_stapler_pad(Base_Task):
             "Gray": (0.5, 0.5, 0.5),
         }
 
-        color_items = list(colors.items())
-        color_index = np.random.choice(len(color_items))
-        self.color_name, self.color_value = color_items[color_index]
+        hex_pad = None
+        if forced_attrs and isinstance(forced_attrs.get("pad_color"), str):
+            hex_pad = forced_attrs["pad_color"].strip()
+        rgb_pad = rgb01_from_hex(hex_pad) if hex_pad else None
+        if rgb_pad is not None:
+            self.color_name = hex_pad if hex_pad.startswith("#") else f"#{hex_pad}"
+            self.color_value = rgb_pad
+        else:
+            color_items = list(colors.items())
+            color_index = np.random.choice(len(color_items))
+            self.color_name, self.color_value = color_items[color_index]
 
         self.pad = create_box(
             scene=self.scene,

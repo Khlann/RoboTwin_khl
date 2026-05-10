@@ -33,7 +33,11 @@ class dump_bin_bigbin(Base_Task):
                 rotate_lim=[0, np.pi / 8.5, 0],
             )
 
-        self.deskbin_id = np.random.choice([0, 3, 7, 8, 9, 10], 1)[0]
+        cat_tgt = getattr(self, "_catalog_mesh_target", None)
+        if cat_tgt is not None:
+            self.deskbin_id = int(cat_tgt[1])
+        else:
+            self.deskbin_id = np.random.choice([0, 3, 7, 8, 9, 10], 1)[0]
         self.deskbin = create_actor(
             self,
             pose=deskbin_pose,
@@ -43,24 +47,26 @@ class dump_bin_bigbin(Base_Task):
         )
         self.garbage_num = 5
         self.sphere_lst = []
-        for i in range(self.garbage_num):
-            sphere_pose = sapien.Pose(
-                [
-                    deskbin_pose.p[0] + np.random.rand() * 0.02 - 0.01,
-                    deskbin_pose.p[1] + np.random.rand() * 0.02 - 0.01,
-                    0.78 + i * 0.005,
-                ],
-                [1, 0, 0, 0],
-            )
-            sphere = create_sphere(
-                self.scene,
-                pose=sphere_pose,
-                radius=0.008,
-                color=[1, 0, 0],
-                name="garbage",
-            )
-            self.sphere_lst.append(sphere)
-            self.sphere_lst[-1].find_component_by_type(sapien.physx.PhysxRigidDynamicComponent).mass = 0.0001
+        # catalog_task_object_images：小球随机落点易触发 check_stable 失败；仅渲染目录图时不生成
+        if cat_tgt is None:
+            for i in range(self.garbage_num):
+                sphere_pose = sapien.Pose(
+                    [
+                        deskbin_pose.p[0] + np.random.rand() * 0.02 - 0.01,
+                        deskbin_pose.p[1] + np.random.rand() * 0.02 - 0.01,
+                        0.78 + i * 0.005,
+                    ],
+                    [1, 0, 0, 0],
+                )
+                sphere = create_sphere(
+                    self.scene,
+                    pose=sphere_pose,
+                    radius=0.008,
+                    color=[1, 0, 0],
+                    name="garbage",
+                )
+                self.sphere_lst.append(sphere)
+                self.sphere_lst[-1].find_component_by_type(sapien.physx.PhysxRigidDynamicComponent).mass = 0.0001
 
         self.add_prohibit_area(self.deskbin, padding=0.04)
         self.prohibited_area.append([-0.2, -0.2, 0.2, 0.2])

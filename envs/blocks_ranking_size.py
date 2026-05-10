@@ -1,5 +1,6 @@
 from ._base_task import Base_Task
 from .utils import *
+from .utils.metadata_bridge import parse_blocks_ranking_forced_colors
 import sapien
 import math
 import numpy as np
@@ -7,11 +8,15 @@ import numpy as np
 
 class blocks_ranking_size(Base_Task):
 
-    def setup_demo(self, **kwags):
-        super()._init_task_env_(**kwags)
+    def setup_demo(self, **kwargs):
+        super()._init_task_env_(**kwargs)
 
     def load_actors(self):
-        color_lst = [(np.random.random(), np.random.random(), np.random.random()) for i in range(3)]
+        forced_rgb = parse_blocks_ranking_forced_colors()
+        if forced_rgb is not None:
+            color_lst = list(forced_rgb)
+        else:
+            color_lst = [(np.random.random(), np.random.random(), np.random.random()) for i in range(3)]
         halfsize_lst = [
             np.random.uniform(0.03, 0.033),
             np.random.uniform(0.024, 0.027),

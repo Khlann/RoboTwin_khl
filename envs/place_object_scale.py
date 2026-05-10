@@ -1,3 +1,5 @@
+import json
+import os
 from copy import deepcopy
 from ._base_task import Base_Task
 from .utils import *
@@ -13,6 +15,39 @@ class place_object_scale(Base_Task):
         super()._init_task_env_(**kwags)
 
     def load_actors(self):
+        object_list = ["047_mouse", "048_stapler", "050_bell"]
+        valid_scale_ids = [0, 1, 5, 6]
+
+        def parse_forced_slots_ab():
+            raw = os.getenv("ROBOTWIN_FORCE_SLOTS_JSON", "").strip()
+            if not raw:
+                return None
+            try:
+                slots = json.loads(raw)
+                if not isinstance(slots, list):
+                    return None
+                by_slot = {}
+                for it in slots:
+                    if not isinstance(it, dict):
+                        continue
+                    sn = str(it.get("slot", "")).strip()
+                    if sn:
+                        by_slot[sn] = it
+                if "A" not in by_slot or "B" not in by_slot:
+                    return None
+                a, b = by_slot["A"], by_slot["B"]
+                scale_name = str(a.get("modelname", "")).strip()
+                scale_id = int(a["model_id"])
+                object_name = str(b.get("modelname", "")).strip()
+                object_id = int(b["model_id"])
+                if scale_name != "072_electronicscale" or scale_id not in valid_scale_ids:
+                    return None
+                if object_name not in object_list:
+                    return None
+                return object_name, object_id, scale_id
+            except (TypeError, ValueError, KeyError):
+                return None
+
         rand_pos = rand_pose(
             xlim=[-0.25, 0.25],
             ylim=[-0.2, 0.05],
@@ -44,15 +79,23 @@ class place_object_scale(Base_Task):
 
             return available_ids
 
-        object_list = ["047_mouse", "048_stapler", "050_bell"]
+        forced = parse_forced_slots_ab()
+        if forced:
+            self.selected_modelname, self.selected_model_id, self.scale_id = forced
+        else:
+            self.selected_modelname = np.random.choice(object_list)
+            available_model_ids = get_available_model_ids(self.selected_modelname)
+            if not available_model_ids:
+                raise ValueError(f"No available model_data.json files found for {self.selected_modelname}")
+            self.selected_model_id = np.random.choice(available_model_ids)
+            self.scale_id = np.random.choice(valid_scale_ids, 1)[0]
 
-        self.selected_modelname = np.random.choice(object_list)
-
+        # Validate forced/random object id against files on disk.
         available_model_ids = get_available_model_ids(self.selected_modelname)
         if not available_model_ids:
             raise ValueError(f"No available model_data.json files found for {self.selected_modelname}")
-
-        self.selected_model_id = np.random.choice(available_model_ids)
+        if self.selected_model_id not in available_model_ids:
+            self.selected_model_id = np.random.choice(available_model_ids)
 
         self.object = create_actor(
             scene=self,
@@ -82,8 +125,6 @@ class place_object_scale(Base_Task):
                 rotate_rand=True,
                 rotate_lim=[0, 3.14, 0],
             )
-
-        self.scale_id = np.random.choice([0, 1, 5, 6], 1)[0]
 
         self.scale = create_actor(
             scene=self,

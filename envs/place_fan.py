@@ -1,5 +1,6 @@
 from ._base_task import Base_Task
 from .utils import *
+from .utils.metadata_bridge import parse_forced_slot_a, rgb01_from_hex
 import sapien
 import math
 from copy import deepcopy
@@ -20,7 +21,11 @@ class place_fan(Base_Task):
             rotate_lim=[0, 2 * np.pi, 0],
         )
         id_list = [4, 5]
-        self.fan_id = np.random.choice(id_list)
+        forced_id, forced_attrs = parse_forced_slot_a("099_fan")
+        if forced_id is not None and forced_id in id_list:
+            self.fan_id = int(forced_id)
+        else:
+            self.fan_id = int(np.random.choice(id_list))
         self.fan = create_actor(
             scene=self,
             pose=rand_pos,
@@ -62,9 +67,17 @@ class place_fan(Base_Task):
             "Silver": (0.75, 0.75, 0.75),
         }
 
-        color_items = list(colors.items())
-        idx = np.random.choice(len(color_items))
-        self.color_name, self.color_value = color_items[idx]
+        hex_pad = None
+        if forced_attrs and isinstance(forced_attrs.get("pad_color"), str):
+            hex_pad = forced_attrs["pad_color"].strip()
+        rgb_pad = rgb01_from_hex(hex_pad) if hex_pad else None
+        if rgb_pad is not None:
+            self.color_name = hex_pad if hex_pad.startswith("#") else f"#{hex_pad}"
+            self.color_value = rgb_pad
+        else:
+            color_items = list(colors.items())
+            idx = np.random.choice(len(color_items))
+            self.color_name, self.color_value = color_items[idx]
 
         self.pad = create_box(
             scene=self.scene,

@@ -27,4 +27,13 @@ envs/curobo/*
 /config.json
 
 /*.json*
+!task_episode_map.json
 /*.txt
+
+# Local fast copy from wm_data/synthesize_robotwin_data.py (large; not source of truth)
+robotwin_generated_synth/
+
+# Trajectories produced on server next to in-repo metadata (wm_data/run_from_metadata.py)
+wm_data/episodes/**/tra1/
+
+catalog_images/

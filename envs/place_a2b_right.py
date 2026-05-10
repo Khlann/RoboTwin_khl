@@ -1,4 +1,6 @@
 import glob
+import json
+import os
 from ._base_task import Base_Task
 from .utils import *
 import sapien
@@ -45,6 +47,38 @@ class place_a2b_right(Base_Task):
         ]
         object_list_np = np.array(object_list)
 
+        def parse_forced_slots_ab():
+            raw = os.getenv("ROBOTWIN_FORCE_SLOTS_JSON", "").strip()
+            if not raw:
+                return None
+            try:
+                slots = json.loads(raw)
+                if not isinstance(slots, list):
+                    return None
+                by_slot = {}
+                for it in slots:
+                    if not isinstance(it, dict):
+                        continue
+                    sn = str(it.get("slot", "")).strip()
+                    if sn:
+                        by_slot[sn] = it
+                if "A" not in by_slot or "B" not in by_slot:
+                    return None
+                a, b = by_slot["A"], by_slot["B"]
+                ma = str(a.get("modelname", "")).strip()
+                mb = str(b.get("modelname", "")).strip()
+                if ma not in object_list or mb not in object_list or ma == mb:
+                    return None
+                ida = int(a["model_id"])
+                idb = int(b["model_id"])
+                if ida not in get_available_model_ids(ma) or idb not in get_available_model_ids(mb):
+                    return None
+                return ma, ida, mb, idb
+            except (TypeError, ValueError, KeyError):
+                return None
+
+        forced_ab = parse_forced_slots_ab()
+
         try_num, try_lim = 0, 100
         while try_num <= try_lim:
             rand_pos = rand_pose(
@@ -84,11 +118,23 @@ class place_a2b_right(Base_Task):
         if try_num > try_lim:
             raise "Actor create limit!"
 
-        self.selected_modelname_A = np.random.choice(object_list_np)
-        available_model_ids = get_available_model_ids(self.selected_modelname_A)
-        self.selected_model_id_A = np.random.choice(available_model_ids)
-        if not available_model_ids:
-            raise ValueError(f"No available model_data.json files found for {self.selected_modelname_A}")
+        if forced_ab:
+            self.selected_modelname_A, self.selected_model_id_A, self.selected_modelname_B, self.selected_model_id_B = forced_ab
+        else:
+            self.selected_modelname_A = str(np.random.choice(object_list_np))
+            available_model_ids = get_available_model_ids(self.selected_modelname_A)
+            if not available_model_ids:
+                raise ValueError(f"No available model_data.json files found for {self.selected_modelname_A}")
+            self.selected_model_id_A = np.random.choice(available_model_ids)
+
+            self.selected_modelname_B = str(np.random.choice(object_list_np))
+            while self.selected_modelname_B == self.selected_modelname_A:
+                self.selected_modelname_B = str(np.random.choice(object_list_np))
+
+            available_model_ids = get_available_model_ids(self.selected_modelname_B)
+            if not available_model_ids:
+                raise ValueError(f"No available model_data.json files found for {self.selected_modelname_B}")
+            self.selected_model_id_B = np.random.choice(available_model_ids)
 
         self.object = create_actor(
             scene=self,
@@ -97,16 +143,6 @@ class place_a2b_right(Base_Task):
             convex=True,
             model_id=self.selected_model_id_A,
         )
-
-        self.selected_modelname_B = np.random.choice(object_list_np)
-        while self.selected_modelname_B == self.selected_modelname_A:
-            self.selected_modelname_B = np.random.choice(object_list_np)
-
-        available_model_ids = get_available_model_ids(self.selected_modelname_B)
-        if not available_model_ids:
-            raise ValueError(f"No available model_data.json files found for {self.selected_modelname_B}")
-
-        self.selected_model_id_B = np.random.choice(available_model_ids)
 
         self.target_object = create_actor(
             scene=self,

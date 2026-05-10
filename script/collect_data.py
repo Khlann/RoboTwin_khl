@@ -108,6 +108,33 @@ def run(TASK_ENV, args):
 
     print(f"Task Name: \033[34m{args['task_name']}\033[0m")
 
+    def _env_truthy(key: str) -> bool:
+        v = os.environ.get(key, "").strip().lower()
+        return v in ("1", "true", "yes", "on")
+
+    # One head-camera frame then exit (used by worldarena_robotwin_labeler --snapshot-only).
+    if _env_truthy("ROBOTWIN_SNAPSHOT_ONLY"):
+        snapshot_path = os.environ.get("ROBOTWIN_SNAPSHOT_PATH", "").strip()
+        if not snapshot_path:
+            raise RuntimeError("ROBOTWIN_SNAPSHOT_PATH is required when ROBOTWIN_SNAPSHOT_ONLY is set")
+        seed = int(os.environ.get("ROBOTWIN_SNAPSHOT_SEED", "0"))
+        os.makedirs(args["save_path"], exist_ok=True)
+        try:
+            TASK_ENV.setup_demo(now_ep_num=0, seed=seed, **args)
+            TASK_ENV.save_camera_rgb(snapshot_path, camera_name="head_camera")
+            print(f"\033[92m[ROBOTWIN_SNAPSHOT] saved:\033[0m {snapshot_path}")
+        finally:
+            try:
+                TASK_ENV.close_env()
+            except Exception:
+                pass
+            if args.get("render_freq"):
+                try:
+                    TASK_ENV.viewer.close()
+                except Exception:
+                    pass
+        return
+
     # =========== Collect Seed ===========
     os.makedirs(args["save_path"], exist_ok=True)
 

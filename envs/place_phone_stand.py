@@ -1,7 +1,9 @@
+import glob
+import json
+import os
 from ._base_task import Base_Task
 from .utils import *
 import sapien
-from copy import deepcopy
 
 
 class place_phone_stand(Base_Task):
@@ -10,6 +12,53 @@ class place_phone_stand(Base_Task):
         super()._init_task_env_(**kwargs)
 
     def load_actors(self):
+        def get_available_model_ids(modelname: str) -> list[int]:
+            asset_path = os.path.join("assets/objects", modelname)
+            json_files = glob.glob(os.path.join(asset_path, "model_data*.json"))
+            out: list[int] = []
+            for file in json_files:
+                base = os.path.basename(file)
+                try:
+                    out.append(int(base.replace("model_data", "").replace(".json", "")))
+                except ValueError:
+                    continue
+            return out
+
+        def parse_forced_slots_ab():
+            raw = os.getenv("ROBOTWIN_FORCE_SLOTS_JSON", "").strip()
+            if not raw:
+                return None
+            try:
+                slots = json.loads(raw)
+                if not isinstance(slots, list):
+                    return None
+                by_slot: dict[str, dict] = {}
+                for it in slots:
+                    if not isinstance(it, dict):
+                        continue
+                    sn = str(it.get("slot", "")).strip()
+                    if sn:
+                        by_slot[sn] = it
+                if "A" not in by_slot or "B" not in by_slot:
+                    return None
+                a, b = by_slot["A"], by_slot["B"]
+                if str(a.get("modelname", "")).strip() != "077_phone":
+                    return None
+                if str(b.get("modelname", "")).strip() != "078_phonestand":
+                    return None
+                phone_id = int(a["model_id"])
+                stand_id = int(b["model_id"])
+                ph_ids = get_available_model_ids("077_phone")
+                st_ids = get_available_model_ids("078_phonestand")
+                if not ph_ids or phone_id not in ph_ids:
+                    return None
+                if not st_ids or stand_id not in st_ids:
+                    return None
+                return phone_id, stand_id
+            except (TypeError, ValueError, KeyError):
+                return None
+
+        forced = parse_forced_slots_ab()
         tag = np.random.randint(2)
         ori_quat = [
             [0.707, 0.707, 0, 0],
@@ -25,7 +74,11 @@ class place_phone_stand(Base_Task):
             phone_x_lim = [0.05, 0.25]
             stand_x_lim = [0, 0.15]
 
-        self.phone_id = np.random.choice([0, 1, 2, 4], 1)[0]
+        if forced:
+            self.phone_id, self.stand_id = forced
+        else:
+            self.phone_id = int(np.random.choice([0, 1, 2, 4], 1)[0])
+            self.stand_id = int(np.random.choice([1, 2], 1)[0])
         phone_pose = rand_pose(
             xlim=phone_x_lim,
             ylim=[-0.2, 0.0],
@@ -56,7 +109,6 @@ class place_phone_stand(Base_Task):
                 rotate_rand=False,
             )
 
-        self.stand_id = np.random.choice([1, 2], 1)[0]
         self.stand = create_actor(
             scene=self,
             pose=stand_pose,

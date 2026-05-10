@@ -1,5 +1,6 @@
 from ._base_task import Base_Task
 from .utils import *
+from .utils.metadata_bridge import parse_forced_slot_a, rgb01_from_hex
 import sapien
 import math
 from ._GLOBAL_CONFIGS import *
@@ -29,7 +30,12 @@ class place_mouse_pad(Base_Task):
                 rotate_lim=[0, np.pi / 4, 0],
             )
 
-        self.mouse_id = np.random.choice([0, 1, 2], 1)[0]
+        allowed_mouse = {0, 1, 2}
+        forced_id, forced_attrs = parse_forced_slot_a("047_mouse")
+        if forced_id is not None and forced_id in allowed_mouse:
+            self.mouse_id = int(forced_id)
+        else:
+            self.mouse_id = int(np.random.choice([0, 1, 2], 1)[0])
         self.mouse = create_actor(
             scene=self,
             pose=rand_pos,
@@ -68,9 +74,17 @@ class place_mouse_pad(Base_Task):
             "Gray": (0.5, 0.5, 0.5),
         }
 
-        color_items = list(colors.items())
-        color_index = np.random.choice(len(color_items))
-        self.color_name, self.color_value = color_items[color_index]
+        hex_pad = None
+        if forced_attrs and isinstance(forced_attrs.get("pad_color"), str):
+            hex_pad = forced_attrs["pad_color"].strip()
+        rgb_pad = rgb01_from_hex(hex_pad) if hex_pad else None
+        if rgb_pad is not None:
+            self.color_name = hex_pad if hex_pad.startswith("#") else f"#{hex_pad}"
+            self.color_value = rgb_pad
+        else:
+            color_items = list(colors.items())
+            color_index = np.random.choice(len(color_items))
+            self.color_name, self.color_value = color_items[color_index]
 
         half_size = [0.035, 0.065, 0.0005]
         self.target = create_box(

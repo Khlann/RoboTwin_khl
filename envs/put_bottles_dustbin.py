@@ -1,15 +1,61 @@
+import glob
+import json
+import os
+
 from ._base_task import Base_Task
 from .utils import *
 import sapien
-from copy import deepcopy
 
 
 class put_bottles_dustbin(Base_Task):
 
-    def setup_demo(self, **kwags):
-        super()._init_task_env_(table_xy_bias=[0.3, 0], **kwags)
+    def setup_demo(self, **kwargs):
+        super()._init_task_env_(table_xy_bias=[0.3, 0], **kwargs)
 
     def load_actors(self):
+        def get_available_model_ids(modelname: str) -> list[int]:
+            asset_path = os.path.join("assets/objects", modelname)
+            json_files = glob.glob(os.path.join(asset_path, "model_data*.json"))
+            out: list[int] = []
+            for file in json_files:
+                base = os.path.basename(file)
+                try:
+                    out.append(int(base.replace("model_data", "").replace(".json", "")))
+                except ValueError:
+                    continue
+            return out
+
+        def parse_forced_three_bottles():
+            raw = os.getenv("ROBOTWIN_FORCE_SLOTS_JSON", "").strip()
+            if not raw:
+                return None
+            try:
+                slots = json.loads(raw)
+                if not isinstance(slots, list):
+                    return None
+                by_slot: dict[str, dict] = {}
+                for it in slots:
+                    if not isinstance(it, dict):
+                        continue
+                    sn = str(it.get("slot", "")).strip()
+                    if sn:
+                        by_slot[sn] = it
+                for need in ("A", "B", "C"):
+                    if need not in by_slot:
+                        return None
+                    s = by_slot[need]
+                    if str(s.get("modelname", "")).strip() != "114_bottle":
+                        return None
+                avail = get_available_model_ids("114_bottle")
+                if not avail:
+                    return None
+                ids = [int(by_slot[sn]["model_id"]) for sn in ("A", "B", "C")]
+                if any(mid not in avail for mid in ids):
+                    return None
+                return ids
+            except (TypeError, ValueError, KeyError):
+                return None
+
         pose_lst = []
 
         def create_bottle(model_id):
@@ -53,7 +99,11 @@ class put_bottles_dustbin(Base_Task):
 
         self.bottles = []
         self.bottles_data = []
-        self.bottle_id = [1, 2, 3]
+        forced_ids = parse_forced_three_bottles()
+        if forced_ids is not None:
+            self.bottle_id = [int(x) for x in forced_ids]
+        else:
+            self.bottle_id = [1, 2, 3]
         self.bottle_num = 3
         for i in range(self.bottle_num):
             bottle = create_bottle(self.bottle_id[i])

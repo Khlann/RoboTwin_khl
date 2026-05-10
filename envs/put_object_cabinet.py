@@ -1,13 +1,16 @@
+import glob
+import json
+import os
+
 from ._base_task import Base_Task
 from .utils import *
 import sapien
-import glob
 
 
 class put_object_cabinet(Base_Task):
 
-    def setup_demo(self, **kwags):
-        super()._init_task_env_(**kwags, table_static=False)
+    def setup_demo(self, **kwargs):
+        super()._init_task_env_(**kwargs, table_static=False)
 
     def load_actors(self):
         self.model_name = "036_cabinet"
@@ -64,11 +67,47 @@ class put_object_cabinet(Base_Task):
             "113_coffee-box",
             "107_soap",
         ]
-        self.selected_modelname = np.random.choice(object_list)
-        available_model_ids = get_available_model_ids(self.selected_modelname)
-        if not available_model_ids:
-            raise ValueError(f"No available model_data.json files found for {self.selected_modelname}")
-        self.selected_model_id = np.random.choice(available_model_ids)
+
+        def parse_forced_slot_a():
+            raw = os.getenv("ROBOTWIN_FORCE_SLOTS_JSON", "").strip()
+            if not raw:
+                return None
+            try:
+                slots = json.loads(raw)
+                if not isinstance(slots, list):
+                    return None
+                by_slot: dict[str, dict] = {}
+                for it in slots:
+                    if not isinstance(it, dict):
+                        continue
+                    sn = str(it.get("slot", "")).strip()
+                    if sn:
+                        by_slot[sn] = it
+                if "A" not in by_slot:
+                    return None
+                a = by_slot["A"]
+                obj_name = str(a.get("modelname", "")).strip()
+                obj_id = int(a["model_id"])
+                if obj_name not in object_list:
+                    return None
+                # 槽位 B 在仿真里固定为柜子；metadata 常误把 top3 里的另一物体写进 B。
+                # 若 B 不是柜子则忽略 B，仍按槽位 A 强制，避免整段解析失败退回随机物体。
+                avail = get_available_model_ids(obj_name)
+                if not avail or obj_id not in avail:
+                    return None
+                return obj_name, obj_id
+            except (TypeError, ValueError, KeyError):
+                return None
+
+        forced = parse_forced_slot_a()
+        if forced:
+            self.selected_modelname, self.selected_model_id = forced
+        else:
+            self.selected_modelname = np.random.choice(object_list)
+            available_model_ids = get_available_model_ids(self.selected_modelname)
+            if not available_model_ids:
+                raise ValueError(f"No available model_data.json files found for {self.selected_modelname}")
+            self.selected_model_id = np.random.choice(available_model_ids)
         self.object = create_actor(
             scene=self,
             pose=rand_pos,
