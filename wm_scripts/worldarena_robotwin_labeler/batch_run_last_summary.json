@@ -1,0 +1,10 @@
+{
+  "mode": "all_tasks_video_batch",
+  "title": "全任务 batch",
+  "total": 1000,
+  "skipped": 1000,
+  "ok": 0,
+  "fail": 0,
+  "failures": [],
+  "failure_log_jsonl": "/disk/worldmodel/ziyang/khl_workspace/worldarena_robotwin_labeler/batch_run_failures.jsonl"
+}
