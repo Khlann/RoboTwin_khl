@@ -1,0 +1,59 @@
+{
+  "task_name": "handover_block",
+  "episode_name": "episode389",
+  "trajectory_name": "tra1",
+  "status": {
+    "task_reviewed": true,
+    "object_id_reviewed": true,
+    "note": "",
+    "reviewed": true
+  },
+  "source": {
+    "query_image_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/first_frame/fixed_scene_task/episode389.png",
+    "query_image_name": "episode389.png",
+    "worldarena_label_task_name": "handover_block",
+    "instruction_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/instructions/fixed_scene_task/episode389.json"
+  },
+  "task_definition": {
+    "instruction_en": "In a fixed robotic workspace, generate a rigid, physically consistent embodied robotic arm. The arm maintains high stability with no deformation and enters the frame to Pick up the red block using the left arm, give it to the right arm, and place it on the blue pad.",
+    "instruction_zh": "在固定的机器人工作空间中，生成刚性的、物理一致的具体机器人手臂。手臂保持高度稳定性，不变形，进入框架后用左臂拾起红色块，交给右臂，放在蓝色垫上。"
+  },
+  "object_binding": {
+    "confirmed_objects": [
+      {
+        "slot": "A",
+        "modelname": "box",
+        "model_id": "procedural",
+        "attrs": {
+          "block_color": "#4947d4"
+        }
+      },
+      {
+        "slot": "B",
+        "modelname": "target_box",
+        "model_id": "procedural",
+        "attrs": {
+          "target_color": "#c5ab54"
+        }
+      }
+    ]
+  },
+  "arms": {
+    "assignments": [
+      {
+        "slot": "A",
+        "arm": "right",
+        "order": 1
+      },
+      {
+        "slot": "B",
+        "arm": "right",
+        "order": 2
+      }
+    ],
+    "arm_order": [
+      "right",
+      "right"
+    ]
+  }
+}

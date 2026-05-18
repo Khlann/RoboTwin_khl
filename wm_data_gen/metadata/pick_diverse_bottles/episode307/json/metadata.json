@@ -1,0 +1,53 @@
+{
+  "task_name": "pick_diverse_bottles",
+  "episode_name": "episode307",
+  "trajectory_name": "tra1",
+  "status": {
+    "task_reviewed": true,
+    "object_id_reviewed": true,
+    "note": "",
+    "reviewed": true
+  },
+  "source": {
+    "query_image_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/first_frame/fixed_scene_task/episode307.png",
+    "query_image_name": "episode307.png",
+    "worldarena_label_task_name": "pick_diverse_bottles",
+    "instruction_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/instructions/fixed_scene_task/episode307.json"
+  },
+  "task_definition": {
+    "instruction_en": "In a fixed robotic workspace, generate a rigid, physically consistent embodied robotic arm. The arm maintains high stability with no deformation and enters the frame to Grab the curved bottle with white top, pick up the light and medium-sized bottle.",
+    "instruction_zh": "在固定的机器人工作空间中，生成刚性的、物理一致的具体机器人手臂。手臂保持高稳定性，不变形，进入框架抓取白顶弧形瓶子，拿起轻、中型瓶子。"
+  },
+  "object_binding": {
+    "confirmed_objects": [
+      {
+        "slot": "A",
+        "modelname": "001_bottle",
+        "model_id": 8
+      },
+      {
+        "slot": "B",
+        "modelname": "001_bottle",
+        "model_id": 4
+      }
+    ]
+  },
+  "arms": {
+    "assignments": [
+      {
+        "arm": "left",
+        "order": 1,
+        "slot": "A"
+      },
+      {
+        "arm": "right",
+        "order": 2,
+        "slot": "B"
+      }
+    ],
+    "arm_order": [
+      "left",
+      "right"
+    ]
+  }
+}

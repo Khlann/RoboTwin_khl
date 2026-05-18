@@ -1,0 +1,64 @@
+{
+  "task_name": "place_burger_fries",
+  "episode_name": "episode365",
+  "trajectory_name": "tra1",
+  "status": {
+    "task_reviewed": true,
+    "object_id_reviewed": true,
+    "note": "",
+    "reviewed": true
+  },
+  "source": {
+    "query_image_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/first_frame/fixed_scene_task/episode365.png",
+    "query_image_name": "episode365.png",
+    "worldarena_label_task_name": "place_burger_fries",
+    "instruction_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/instructions/fixed_scene_task/episode365.json"
+  },
+  "task_definition": {
+    "instruction_en": "In a fixed robotic workspace, generate a rigid, physically consistent embodied robotic arm. The arm maintains high stability with no deformation and enters the frame to Grab the white hamburg, grab the McDonald's logo on red fries box, and set both onto the medium rectangular flat tray.",
+    "instruction_zh": "在固定的机器人工作空间中，生成刚性的、物理一致的具体机器人手臂。手臂保持高稳定性，不变形，进入框架抓取白色汉堡，抓取红色薯条盒上的麦当劳标志，并将两者放在中长方形平板托盘上。"
+  },
+  "object_binding": {
+    "confirmed_objects": [
+      {
+        "slot": "A",
+        "modelname": "006_hamburg",
+        "model_id": 2
+      },
+      {
+        "slot": "B",
+        "modelname": "005_french-fries",
+        "model_id": 1
+      },
+      {
+        "slot": "C",
+        "modelname": "008_tray",
+        "model_id": 0
+      }
+    ]
+  },
+  "arms": {
+    "assignments": [
+      {
+        "arm": "left",
+        "order": 1,
+        "slot": "A"
+      },
+      {
+        "arm": "right",
+        "order": 2,
+        "slot": "B"
+      },
+      {
+        "arm": "left",
+        "order": 3,
+        "slot": "C"
+      }
+    ],
+    "arm_order": [
+      "left",
+      "right",
+      "left"
+    ]
+  }
+}

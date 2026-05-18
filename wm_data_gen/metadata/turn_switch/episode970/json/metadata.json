@@ -1,0 +1,31 @@
+{
+  "task_name": "turn_switch",
+  "episode_name": "episode970",
+  "trajectory_name": "tra1",
+  "status": {
+    "task_reviewed": true,
+    "object_id_reviewed": true,
+    "note": "",
+    "reviewed": true
+  },
+  "source": {
+    "query_image_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/first_frame/fixed_scene_task/episode970.png",
+    "query_image_name": "episode970.png",
+    "worldarena_label_task_name": "turn_switch",
+    "instruction_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/instructions/fixed_scene_task/episode970.json"
+  },
+  "task_definition": {
+    "instruction_en": "In a fixed robotic workspace, generate a rigid, physically consistent embodied robotic arm. The arm maintains high stability with no deformation and enters the frame to Click the plastic switch with metal prongs with robotic precision",
+    "instruction_zh": "在固定的机器人工作空间中，生成刚性的、物理一致的具体机器人手臂。手臂保持高稳定性，不变形，进入框架以机器人精度点击带有金属插脚的塑料开关"
+  },
+  "object_binding": {
+    "confirmed_objects": [
+      {
+        "slot": "A",
+        "modelname": "056_switch",
+        "model_id": 100907
+      }
+    ]
+  },
+  "arms": "none"
+}

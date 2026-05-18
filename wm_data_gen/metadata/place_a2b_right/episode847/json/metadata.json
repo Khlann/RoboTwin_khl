@@ -1,0 +1,53 @@
+{
+  "task_name": "place_a2b_right",
+  "episode_name": "episode847",
+  "trajectory_name": "tra1",
+  "status": {
+    "task_reviewed": true,
+    "object_id_reviewed": true,
+    "note": "",
+    "reviewed": true
+  },
+  "source": {
+    "query_image_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/first_frame/fixed_scene_task/episode847.png",
+    "query_image_name": "episode847.png",
+    "worldarena_label_task_name": "place_a2b_right",
+    "instruction_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/instructions/fixed_scene_task/episode847.json"
+  },
+  "task_definition": {
+    "instruction_en": "In a fixed robotic workspace, generate a rigid, physically consistent embodied robotic arm. The arm maintains high stability with no deformation and enters the frame to Place the pink toycar using the right arm at the light gray rectangular cleaning soap's right",
+    "instruction_zh": "在固定的机器人工作空间中，生成刚性的、物理一致的具体机器人手臂。手臂保持高稳定性，不变形，进入框架，用右臂将粉色玩具车放置在浅灰色长方形清洁皂的右侧"
+  },
+  "object_binding": {
+    "confirmed_objects": [
+      {
+        "slot": "A",
+        "modelname": "057_toycar",
+        "model_id": 2
+      },
+      {
+        "slot": "B",
+        "modelname": "107_soap",
+        "model_id": 1
+      }
+    ]
+  },
+  "arms": {
+    "assignments": [
+      {
+        "arm": "left",
+        "order": 1,
+        "slot": "A"
+      },
+      {
+        "arm": "right",
+        "order": 2,
+        "slot": "B"
+      }
+    ],
+    "arm_order": [
+      "left",
+      "right"
+    ]
+  }
+}

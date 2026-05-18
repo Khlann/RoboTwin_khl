@@ -1,0 +1,36 @@
+{
+  "task_name": "hanging_mug",
+  "episode_name": "episode612",
+  "trajectory_name": "tra1",
+  "status": {
+    "task_reviewed": true,
+    "object_id_reviewed": true,
+    "note": "",
+    "reviewed": true
+  },
+  "source": {
+    "query_image_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/first_frame/fixed_scene_task/episode612.png",
+    "query_image_name": "episode612.png",
+    "worldarena_label_task_name": "hanging_mug",
+    "instruction_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/instructions/fixed_scene_task/episode612.json"
+  },
+  "task_definition": {
+    "instruction_en": "In a fixed robotic workspace, generate a rigid, physically consistent embodied robotic arm. The arm maintains high stability with no deformation and enters the frame to Take the medium beige mug from the table, rotate it, place it in the center, then hang it onto the metal rack.",
+    "instruction_zh": "在固定的机器人工作空间中，生成刚性的、物理一致的具体机器人手臂。手臂保持高度稳定性，不变形，进入框架从桌子上拿起中号米色马克杯，旋转它，将其放置在中央，然后将其挂在金属架上。"
+  },
+  "object_binding": {
+    "confirmed_objects": [
+      {
+        "slot": "A",
+        "modelname": "039_mug",
+        "model_id": 6
+      },
+      {
+        "slot": "B",
+        "modelname": "040_rack",
+        "model_id": 0
+      }
+    ]
+  },
+  "arms": "none"
+}

@@ -1,0 +1,36 @@
+{
+  "task_name": "move_can_pot",
+  "episode_name": "episode119",
+  "trajectory_name": "tra1",
+  "status": {
+    "task_reviewed": true,
+    "object_id_reviewed": true,
+    "note": "",
+    "reviewed": true
+  },
+  "source": {
+    "query_image_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/first_frame/fixed_scene_task/episode119.png",
+    "query_image_name": "episode119.png",
+    "worldarena_label_task_name": "move_can_pot",
+    "instruction_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/instructions/fixed_scene_task/episode119.json"
+  },
+  "task_definition": {
+    "instruction_en": "In a fixed robotic workspace, generate a rigid, physically consistent embodied robotic arm. The arm maintains high stability with no deformation and enters the frame to Lift the sturdy sauce can with glossy finish and place it next to the gray kitchenpot",
+    "instruction_zh": "在固定的机器人工作空间中，生成刚性的、物理一致的具体机器人手臂。手臂保持高稳定性，不变形，进入框架，将坚固的表面光滑的酱汁罐提起并放置在灰色厨房锅旁边"
+  },
+  "object_binding": {
+    "confirmed_objects": [
+      {
+        "slot": "A",
+        "modelname": "105_sauce-can",
+        "model_id": 6
+      },
+      {
+        "slot": "B",
+        "modelname": "060_kitchenpot",
+        "model_id": 100058
+      }
+    ]
+  },
+  "arms": "none"
+}

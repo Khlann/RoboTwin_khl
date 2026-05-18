@@ -1,0 +1,73 @@
+{
+  "task_name": "blocks_ranking_size",
+  "episode_name": "episode692",
+  "trajectory_name": "tra1",
+  "status": {
+    "task_reviewed": true,
+    "object_id_reviewed": true,
+    "note": "",
+    "reviewed": true
+  },
+  "source": {
+    "query_image_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/first_frame/fixed_scene_task/episode692.png",
+    "query_image_name": "episode692.png",
+    "worldarena_label_task_name": "blocks_ranking_size",
+    "instruction_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/instructions/fixed_scene_task/episode692.json"
+  },
+  "task_definition": {
+    "instruction_en": "In a fixed robotic workspace, generate a rigid, physically consistent embodied robotic arm. The arm maintains high stability with no deformation and enters the frame to Move large block with the left arm, medium block with the right arm, and small block with the right arm to arrange them.",
+    "instruction_zh": "在固定的机器人工作空间中，生成刚性的、物理一致的具体机器人手臂。手臂保持高稳定性，不变形，进入框架左臂移动大块，右臂移动中块，右臂移动小块进行排列。"
+  },
+  "object_binding": {
+    "confirmed_objects": [
+      {
+        "slot": "A",
+        "modelname": "sapien-block1",
+        "model_id": "procedural",
+        "attrs": {
+          "block_color": "#9af5de"
+        }
+      },
+      {
+        "slot": "B",
+        "modelname": "sapien-block1",
+        "model_id": "procedural",
+        "attrs": {
+          "block_color": "#bcdbb9"
+        }
+      },
+      {
+        "slot": "C",
+        "modelname": "sapien-block1",
+        "model_id": "procedural",
+        "attrs": {
+          "block_color": "#f29b43"
+        }
+      }
+    ]
+  },
+  "arms": {
+    "assignments": [
+      {
+        "arm": "left",
+        "order": 1,
+        "slot": "A"
+      },
+      {
+        "arm": "right",
+        "order": 2,
+        "slot": "B"
+      },
+      {
+        "arm": "right",
+        "order": 3,
+        "slot": "C"
+      }
+    ],
+    "arm_order": [
+      "left",
+      "right",
+      "right"
+    ]
+  }
+}

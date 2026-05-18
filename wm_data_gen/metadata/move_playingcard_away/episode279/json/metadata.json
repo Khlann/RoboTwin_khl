@@ -1,0 +1,31 @@
+{
+  "task_name": "move_playingcard_away",
+  "episode_name": "episode279",
+  "trajectory_name": "tra1",
+  "status": {
+    "task_reviewed": true,
+    "object_id_reviewed": false,
+    "note": "",
+    "reviewed": true
+  },
+  "source": {
+    "query_image_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/first_frame/fixed_scene_task/episode279.png",
+    "query_image_name": "episode279.png",
+    "worldarena_label_task_name": "move_playingcard_away",
+    "instruction_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/instructions/fixed_scene_task/episode279.json"
+  },
+  "task_definition": {
+    "instruction_en": "In a fixed robotic workspace, generate a rigid, physically consistent embodied robotic arm. The arm maintains high stability with no deformation and enters the frame to Move the playingcards box with white accents outward from the table.",
+    "instruction_zh": "在固定的机器人工作空间中，生成刚性的、物理一致的具体机器人手臂。手臂保持高稳定性，不变形，进入框架将带有白色口音的扑克牌盒从桌子上移出。"
+  },
+  "object_binding": {
+    "confirmed_objects": [
+      {
+        "slot": "A",
+        "modelname": "081_playingcards",
+        "model_id": 1
+      }
+    ]
+  },
+  "arms": "none"
+}

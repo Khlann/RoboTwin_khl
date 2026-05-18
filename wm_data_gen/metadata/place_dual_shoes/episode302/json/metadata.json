@@ -1,0 +1,59 @@
+{
+  "task_name": "place_dual_shoes",
+  "episode_name": "episode302",
+  "trajectory_name": "tra1",
+  "status": {
+    "task_reviewed": true,
+    "object_id_reviewed": true,
+    "note": "",
+    "reviewed": true
+  },
+  "source": {
+    "query_image_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/first_frame/fixed_scene_task/episode302.png",
+    "query_image_name": "episode302.png",
+    "worldarena_label_task_name": "place_dual_shoes",
+    "instruction_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/instructions/fixed_scene_task/episode302.json"
+  },
+  "task_definition": {
+    "instruction_en": "In a fixed robotic workspace, generate a rigid, physically consistent embodied robotic arm. The arm maintains high stability with no deformation and enters the frame to Put two the footwear with padded heel into the medium-sized box with Nike swoosh, shoe tips left.",
+    "instruction_zh": "在固定的机器人工作空间中，生成刚性的、物理一致的具体机器人手臂。手臂保持高度稳定性，不变形，进入框架将两双带垫后跟的鞋放入带有耐克耐克标志的中型盒子中，鞋尖左侧。"
+  },
+  "object_binding": {
+    "confirmed_objects": [
+      {
+        "slot": "A",
+        "modelname": "041_shoe",
+        "model_id": 4
+      },
+      {
+        "slot": "B",
+        "modelname": "041_shoe",
+        "model_id": 4
+      }
+    ]
+  },
+  "arms": {
+    "assignments": [
+      {
+        "arm": "left",
+        "order": 1,
+        "slot": "A"
+      },
+      {
+        "arm": "right",
+        "order": 2,
+        "slot": "B"
+      },
+      {
+        "arm": "left",
+        "order": 3,
+        "slot": "C"
+      }
+    ],
+    "arm_order": [
+      "left",
+      "right",
+      "left"
+    ]
+  }
+}

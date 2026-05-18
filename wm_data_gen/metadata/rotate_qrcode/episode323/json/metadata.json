@@ -1,0 +1,31 @@
+{
+  "task_name": "rotate_qrcode",
+  "episode_name": "episode323",
+  "trajectory_name": "tra1",
+  "status": {
+    "task_reviewed": true,
+    "object_id_reviewed": true,
+    "note": "",
+    "reviewed": true
+  },
+  "source": {
+    "query_image_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/first_frame/fixed_scene_task/episode323.png",
+    "query_image_name": "episode323.png",
+    "worldarena_label_task_name": "rotate_qrcode",
+    "instruction_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/instructions/fixed_scene_task/episode323.json"
+  },
+  "task_definition": {
+    "instruction_en": "In a fixed robotic workspace, generate a rigid, physically consistent embodied robotic arm. The arm maintains high stability with no deformation and enters the frame to Grab the compact paymentsign for scanning payments, lift it from the table, and rotate it QR front",
+    "instruction_zh": "在固定的机器人工作空间中，生成刚性的、物理一致的具体机器人手臂。手臂保持高稳定性，不变形，进入框架抓取紧凑型支付标志进行扫描支付，将其从桌子上提起，然后将其旋转二维码正面"
+  },
+  "object_binding": {
+    "confirmed_objects": [
+      {
+        "slot": "A",
+        "modelname": "070_paymentsign",
+        "model_id": 0
+      }
+    ]
+  },
+  "arms": "none"
+}

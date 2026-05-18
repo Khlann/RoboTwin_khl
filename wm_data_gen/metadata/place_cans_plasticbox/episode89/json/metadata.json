@@ -1,0 +1,64 @@
+{
+  "task_name": "place_cans_plasticbox",
+  "episode_name": "episode89",
+  "trajectory_name": "tra1",
+  "status": {
+    "task_reviewed": true,
+    "object_id_reviewed": true,
+    "note": "",
+    "reviewed": true
+  },
+  "source": {
+    "query_image_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/first_frame/fixed_scene_task/episode89.png",
+    "query_image_name": "episode89.png",
+    "worldarena_label_task_name": "place_cans_plasticbox",
+    "instruction_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/instructions/fixed_scene_task/episode89.json"
+  },
+  "task_definition": {
+    "instruction_en": "In a fixed robotic workspace, generate a rigid, physically consistent embodied robotic arm. The arm maintains high stability with no deformation and enters the frame to Use both arms to move the rounded red Coca-Cola soda container and the small aluminum red drink can into the plasticbox with smooth plastic texture.",
+    "instruction_zh": "在固定的机器人工作空间中，生成刚性的、物理一致的具体机器人手臂。手臂保持高稳定性，不变形，进入框架，用双臂将圆形红色可口可乐汽水容器和红色铝制小饮料罐移入塑料质感光滑的塑料盒中。"
+  },
+  "object_binding": {
+    "confirmed_objects": [
+      {
+        "slot": "A",
+        "modelname": "071_can",
+        "model_id": 3
+      },
+      {
+        "slot": "B",
+        "modelname": "071_can",
+        "model_id": 3
+      },
+      {
+        "slot": "C",
+        "modelname": "062_plasticbox",
+        "model_id": 3
+      }
+    ]
+  },
+  "arms": {
+    "assignments": [
+      {
+        "arm": "left",
+        "order": 1,
+        "slot": "A"
+      },
+      {
+        "arm": "right",
+        "order": 2,
+        "slot": "B"
+      },
+      {
+        "arm": "left",
+        "order": 3,
+        "slot": "C"
+      }
+    ],
+    "arm_order": [
+      "left",
+      "right",
+      "left"
+    ]
+  }
+}

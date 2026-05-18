@@ -1,0 +1,48 @@
+{
+  "task_name": "place_empty_cup",
+  "episode_name": "episode125",
+  "trajectory_name": "tra1",
+  "status": {
+    "task_reviewed": true,
+    "object_id_reviewed": true,
+    "note": "",
+    "reviewed": true
+  },
+  "source": {
+    "query_image_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/first_frame/fixed_scene_task/episode125.png",
+    "query_image_name": "episode125.png",
+    "worldarena_label_task_name": "place_empty_cup",
+    "instruction_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/instructions/fixed_scene_task/episode125.json"
+  },
+  "task_definition": {
+    "instruction_en": "In a fixed robotic workspace, generate a rigid, physically consistent embodied robotic arm. The arm maintains high stability with no deformation and enters the frame to Use an arm to place the smooth blue cup for liquids on the coaster made of smooth wood",
+    "instruction_zh": "在固定的机器人工作空间中，生成刚性的、物理一致的具体机器人手臂。手臂保持高稳定性，不变形，进入框架，用手臂将光滑的蓝色液体杯放在光滑木质的杯垫上"
+  },
+  "object_binding": {
+    "confirmed_objects": [
+      {
+        "slot": "B",
+        "modelname": "019_coaster",
+        "model_id": 0
+      }
+    ]
+  },
+  "arms": {
+    "assignments": [
+      {
+        "arm": "left",
+        "order": 1,
+        "slot": "A"
+      },
+      {
+        "arm": "right",
+        "order": 2,
+        "slot": "B"
+      }
+    ],
+    "arm_order": [
+      "left",
+      "right"
+    ]
+  }
+}

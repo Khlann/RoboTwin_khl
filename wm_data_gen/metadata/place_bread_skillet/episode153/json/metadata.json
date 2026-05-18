@@ -1,0 +1,53 @@
+{
+  "task_name": "place_bread_skillet",
+  "episode_name": "episode153",
+  "trajectory_name": "tra1",
+  "status": {
+    "task_reviewed": true,
+    "object_id_reviewed": true,
+    "note": "",
+    "reviewed": true
+  },
+  "source": {
+    "query_image_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/first_frame/fixed_scene_task/episode153.png",
+    "query_image_name": "episode153.png",
+    "worldarena_label_task_name": "place_bread_skillet",
+    "instruction_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/instructions/fixed_scene_task/episode153.json"
+  },
+  "task_definition": {
+    "instruction_en": "In a fixed robotic workspace, generate a rigid, physically consistent embodied robotic arm. The arm maintains high stability with no deformation and enters the frame to Pick the light brown bread with ridges off the table and place it in the gray skillet for stovetop cooking.",
+    "instruction_zh": "在固定的机器人工作空间中，生成刚性的、物理一致的具体机器人手臂。手臂保持高稳定性，不变形，进入框架将有脊的浅棕色面包从桌子上摘下来，放入灰色煎锅中进行炉灶烹饪。"
+  },
+  "object_binding": {
+    "confirmed_objects": [
+      {
+        "slot": "A",
+        "modelname": "075_bread",
+        "model_id": 3
+      },
+      {
+        "slot": "B",
+        "modelname": "106_skillet",
+        "model_id": 0
+      }
+    ]
+  },
+  "arms": {
+    "assignments": [
+      {
+        "arm": "left",
+        "order": 1,
+        "slot": "A"
+      },
+      {
+        "arm": "right",
+        "order": 2,
+        "slot": "B"
+      }
+    ],
+    "arm_order": [
+      "left",
+      "right"
+    ]
+  }
+}

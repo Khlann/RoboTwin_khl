@@ -1,0 +1,36 @@
+{
+  "task_name": "place_can_basket",
+  "episode_name": "episode243",
+  "trajectory_name": "tra1",
+  "status": {
+    "task_reviewed": true,
+    "object_id_reviewed": true,
+    "note": "",
+    "reviewed": true
+  },
+  "source": {
+    "query_image_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/first_frame/fixed_scene_task/episode243.png",
+    "query_image_name": "episode243.png",
+    "worldarena_label_task_name": "place_can_basket",
+    "instruction_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/instructions/fixed_scene_task/episode243.json"
+  },
+  "task_definition": {
+    "instruction_en": "In a fixed robotic workspace, generate a rigid, physically consistent embodied robotic arm. The arm maintains high stability with no deformation and enters the frame to Grab the smooth cylindrical can with lime pattern using the right arm, drop the smooth cylindrical can with lime pattern into the oval-shaped basket with woven body and lift the oval-shaped basket with woven body.",
+    "instruction_zh": "在固定的机器人工作空间中，生成刚性的、物理一致的具体机器人手臂。手臂保持高度稳定性，不变形，进入机架，用右臂抓取石灰纹光滑圆柱罐，将石灰纹光滑圆柱罐落入椭圆形编织体篮子中，并将椭圆形编织体篮子提起。"
+  },
+  "object_binding": {
+    "confirmed_objects": [
+      {
+        "slot": "A",
+        "modelname": "071_can",
+        "model_id": 2
+      },
+      {
+        "slot": "B",
+        "modelname": "110_basket",
+        "model_id": 0
+      }
+    ]
+  },
+  "arms": "right"
+}

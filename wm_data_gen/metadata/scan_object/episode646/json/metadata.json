@@ -1,0 +1,36 @@
+{
+  "task_name": "scan_object",
+  "episode_name": "episode646",
+  "trajectory_name": "tra1",
+  "status": {
+    "task_reviewed": true,
+    "object_id_reviewed": true,
+    "note": "",
+    "reviewed": true
+  },
+  "source": {
+    "query_image_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/first_frame/fixed_scene_task/episode646.png",
+    "query_image_name": "episode646.png",
+    "worldarena_label_task_name": "scan_object",
+    "instruction_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/instructions/fixed_scene_task/episode646.json"
+  },
+  "task_definition": {
+    "instruction_en": "In a fixed robotic workspace, generate a rigid, physically consistent embodied robotic arm. The arm maintains high stability with no deformation and enters the frame to Grab the scanner with gray accents in one hand, pick the cuboid tea box in the other hand, then scan the cuboid tea box with the scanner with gray accents",
+    "instruction_zh": "在固定的机器人工作空间中，生成刚性的、物理一致的具体机器人手臂。手臂保持高稳定性，不变形，进入框架，一手抓住灰色口音扫描仪，另一只手拿起长方体茶盒，然后用灰色口音扫描仪扫描长方体茶盒"
+  },
+  "object_binding": {
+    "confirmed_objects": [
+      {
+        "slot": "A",
+        "modelname": "024_scanner",
+        "model_id": 0
+      },
+      {
+        "slot": "B",
+        "modelname": "112_tea-box",
+        "model_id": 3
+      }
+    ]
+  },
+  "arms": "none"
+}

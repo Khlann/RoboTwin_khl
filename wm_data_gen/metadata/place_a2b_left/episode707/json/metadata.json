@@ -1,0 +1,36 @@
+{
+  "task_name": "place_a2b_left",
+  "episode_name": "episode707",
+  "trajectory_name": "tra1",
+  "status": {
+    "task_reviewed": true,
+    "object_id_reviewed": true,
+    "note": "",
+    "reviewed": true
+  },
+  "source": {
+    "query_image_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/first_frame/fixed_scene_task/episode707.png",
+    "query_image_name": "episode707.png",
+    "worldarena_label_task_name": "place_a2b_left",
+    "instruction_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/instructions/fixed_scene_task/episode707.json"
+  },
+  "task_definition": {
+    "instruction_en": "In a fixed robotic workspace, generate a rigid, physically consistent embodied robotic arm. The arm maintains high stability with no deformation and enters the frame to Using the left arm, move the yellow-blue rubikscube left of the rounded bar of dark soap.",
+    "instruction_zh": "在固定的机器人工作空间中，生成刚性的、物理一致的具体机器人手臂。手臂保持高度稳定性，不变形，进入框架使用左臂，将黄蓝色魔方移动到圆形深色肥皂条的左侧。"
+  },
+  "object_binding": {
+    "confirmed_objects": [
+      {
+        "slot": "A",
+        "modelname": "073_rubikscube",
+        "model_id": 2
+      },
+      {
+        "slot": "B",
+        "modelname": "107_soap",
+        "model_id": 3
+      }
+    ]
+  },
+  "arms": "left"
+}

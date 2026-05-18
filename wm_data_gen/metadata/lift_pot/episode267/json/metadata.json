@@ -1,0 +1,36 @@
+{
+  "task_name": "lift_pot",
+  "episode_name": "episode267",
+  "trajectory_name": "tra1",
+  "status": {
+    "task_reviewed": true,
+    "object_id_reviewed": false,
+    "note": "",
+    "reviewed": true
+  },
+  "source": {
+    "query_image_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/first_frame/fixed_scene_task/episode267.png",
+    "query_image_name": "episode267.png",
+    "worldarena_label_task_name": "lift_pot",
+    "instruction_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/instructions/fixed_scene_task/episode267.json"
+  },
+  "task_definition": {
+    "instruction_en": "In a fixed robotic workspace, generate a rigid, physically consistent embodied robotic arm. The arm maintains high stability with no deformation and enters the frame to Both arms lift the smooth gray kitchenpot upright",
+    "instruction_zh": "在固定的机器人工作空间中，生成刚性的、物理一致的具体机器人手臂。手臂保持高稳定性，不变形，进入框架，双臂将光滑的灰色厨房锅直立"
+  },
+  "object_binding": {
+    "confirmed_objects": []
+  },
+  "arms": {
+    "assignments": [
+      {
+        "slot": "A",
+        "arm": "right",
+        "order": 1
+      }
+    ],
+    "arm_order": [
+      "right"
+    ]
+  }
+}

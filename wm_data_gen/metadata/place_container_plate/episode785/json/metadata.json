@@ -1,0 +1,48 @@
+{
+  "task_name": "place_container_plate",
+  "episode_name": "episode785",
+  "trajectory_name": "tra1",
+  "status": {
+    "task_reviewed": true,
+    "object_id_reviewed": true,
+    "note": "",
+    "reviewed": true
+  },
+  "source": {
+    "query_image_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/first_frame/fixed_scene_task/episode785.png",
+    "query_image_name": "episode785.png",
+    "worldarena_label_task_name": "place_container_plate",
+    "instruction_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/instructions/fixed_scene_task/episode785.json"
+  },
+  "task_definition": {
+    "instruction_en": "In a fixed robotic workspace, generate a rigid, physically consistent embodied robotic arm. The arm maintains high stability with no deformation and enters the frame to Use the gray bowl with polished surface to grab the container and place it on the flat ceramic plate with smooth texture.",
+    "instruction_zh": "在固定的机器人工作空间中，生成刚性的、物理一致的具体机器人手臂。手臂保持高稳定性，不变形，进入框架，使用表面抛光的灰色碗抓取容器并将其放置在质地光滑的平坦陶瓷板上。"
+  },
+  "object_binding": {
+    "confirmed_objects": [
+      {
+        "slot": "B",
+        "modelname": "002_bowl",
+        "model_id": 5
+      }
+    ]
+  },
+  "arms": {
+    "assignments": [
+      {
+        "arm": "left",
+        "order": 1,
+        "slot": "A"
+      },
+      {
+        "arm": "right",
+        "order": 2,
+        "slot": "B"
+      }
+    ],
+    "arm_order": [
+      "left",
+      "right"
+    ]
+  }
+}

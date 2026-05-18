@@ -1,0 +1,39 @@
+{
+  "task_name": "place_fan",
+  "episode_name": "episode14",
+  "trajectory_name": "tra1",
+  "status": {
+    "task_reviewed": true,
+    "object_id_reviewed": true,
+    "note": "",
+    "reviewed": true
+  },
+  "source": {
+    "query_image_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/first_frame/fixed_scene_task/episode14.png",
+    "query_image_name": "episode14.png",
+    "worldarena_label_task_name": "place_fan",
+    "instruction_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/instructions/fixed_scene_task/episode14.json"
+  },
+  "task_definition": {
+    "instruction_en": "In a fixed robotic workspace, generate a rigid, physically consistent embodied robotic arm. The arm maintains high stability with no deformation and enters the frame to With the left arm, grab the fan with rectangular base, align it to face the robot, and put it on the Blue mat.",
+    "instruction_zh": "在固定的机器人工作空间中，生成刚性的、物理一致的具体机器人手臂。手臂保持高稳定性，不变形，进入框架，用左臂抓住矩形底座的风扇，将其对准机器人，并将其放在蓝色垫子上。"
+  },
+  "object_binding": {
+    "confirmed_objects": [
+      {
+        "slot": "A",
+        "modelname": "099_fan",
+        "model_id": 4
+      },
+      {
+        "slot": "B",
+        "modelname": "pad_color",
+        "model_id": null,
+        "attrs": {
+          "pad_color": "#1516f0"
+        }
+      }
+    ]
+  },
+  "arms": "left"
+}

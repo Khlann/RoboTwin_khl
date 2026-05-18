@@ -1,0 +1,73 @@
+{
+  "task_name": "blocks_ranking_size",
+  "episode_name": "episode729",
+  "trajectory_name": "tra1",
+  "status": {
+    "task_reviewed": true,
+    "object_id_reviewed": true,
+    "note": "",
+    "reviewed": true
+  },
+  "source": {
+    "query_image_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/first_frame/fixed_scene_task/episode729.png",
+    "query_image_name": "episode729.png",
+    "worldarena_label_task_name": "blocks_ranking_size",
+    "instruction_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/instructions/fixed_scene_task/episode729.json"
+  },
+  "task_definition": {
+    "instruction_en": "In a fixed robotic workspace, generate a rigid, physically consistent embodied robotic arm. The arm maintains high stability with no deformation and enters the frame to Grab large block, medium block, small block with the left arm, the left arm, the right arm and organize them by descending size.",
+    "instruction_zh": "在固定的机器人工作空间中，生成刚性的、物理一致的具体机器人手臂。手臂保持高稳定性，不变形，进入机架，用左臂、左臂、右臂抓取大块、中块、小块，并按大小递减整理。"
+  },
+  "object_binding": {
+    "confirmed_objects": [
+      {
+        "slot": "A",
+        "modelname": "sapien-block1",
+        "model_id": "procedural",
+        "attrs": {
+          "block_color": "#8798d7"
+        }
+      },
+      {
+        "slot": "B",
+        "modelname": "sapien-block1",
+        "model_id": "procedural",
+        "attrs": {
+          "block_color": "#7f897e"
+        }
+      },
+      {
+        "slot": "C",
+        "modelname": "sapien-block1",
+        "model_id": "procedural",
+        "attrs": {
+          "block_color": "#77447a"
+        }
+      }
+    ]
+  },
+  "arms": {
+    "assignments": [
+      {
+        "arm": "left",
+        "order": 1,
+        "slot": "A"
+      },
+      {
+        "arm": "left",
+        "order": 2,
+        "slot": "B"
+      },
+      {
+        "arm": "right",
+        "order": 3,
+        "slot": "C"
+      }
+    ],
+    "arm_order": [
+      "left",
+      "left",
+      "right"
+    ]
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "task_name": "place_a2b_left",
+  "episode_name": "episode169",
+  "trajectory_name": "tra1",
+  "status": {
+    "task_reviewed": true,
+    "object_id_reviewed": true,
+    "note": "",
+    "reviewed": true
+  },
+  "source": {
+    "query_image_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/first_frame/fixed_scene_task/episode169.png",
+    "query_image_name": "episode169.png",
+    "worldarena_label_task_name": "place_a2b_left",
+    "instruction_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/instructions/fixed_scene_task/episode169.json"
+  },
+  "task_definition": {
+    "instruction_en": "In a fixed robotic workspace, generate a rigid, physically consistent embodied robotic arm. The arm maintains high stability with no deformation and enters the frame to Use the left arm, move the bell with protruding knob left of the rubikscube with smooth plastic tiles",
+    "instruction_zh": "在固定的机器人工作空间中，生成刚性的、物理一致的具体机器人手臂。手臂保持高稳定性，不变形，进入框架使用左臂，移动带有光滑塑料瓷砖的魔方左侧带有突出旋钮的铃铛"
+  },
+  "object_binding": {
+    "confirmed_objects": [
+      {
+        "slot": "A",
+        "modelname": "050_bell",
+        "model_id": 1
+      },
+      {
+        "slot": "B",
+        "modelname": "073_rubikscube",
+        "model_id": 2
+      }
+    ]
+  },
+  "arms": "left"
+}

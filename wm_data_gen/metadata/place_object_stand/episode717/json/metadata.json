@@ -1,0 +1,36 @@
+{
+  "task_name": "place_object_stand",
+  "episode_name": "episode717",
+  "trajectory_name": "tra1",
+  "status": {
+    "task_reviewed": true,
+    "object_id_reviewed": true,
+    "note": "",
+    "reviewed": true
+  },
+  "source": {
+    "query_image_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/first_frame/fixed_scene_task/episode717.png",
+    "query_image_name": "episode717.png",
+    "worldarena_label_task_name": "place_object_stand",
+    "instruction_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/instructions/fixed_scene_task/episode717.json"
+  },
+  "task_definition": {
+    "instruction_en": "In a fixed robotic workspace, generate a rigid, physically consistent embodied robotic arm. The arm maintains high stability with no deformation and enters the frame to Set the puzzle rubikscube with 3x3 grid per side on the displaystand with smooth finish using the left arm",
+    "instruction_zh": "在固定的机器人工作空间中，生成刚性的、物理一致的具体机器人手臂。手臂保持高稳定性，不变形，进入框架，使用左臂将每边 3x3 网格的魔方放置在展示架上，表面光滑"
+  },
+  "object_binding": {
+    "confirmed_objects": [
+      {
+        "slot": "A",
+        "modelname": "073_rubikscube",
+        "model_id": 1
+      },
+      {
+        "slot": "B",
+        "modelname": "074_displaystand",
+        "model_id": 4
+      }
+    ]
+  },
+  "arms": "left"
+}

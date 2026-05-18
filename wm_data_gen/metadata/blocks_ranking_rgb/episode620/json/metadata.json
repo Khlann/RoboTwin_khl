@@ -1,0 +1,48 @@
+{
+  "task_name": "blocks_ranking_rgb",
+  "episode_name": "episode620",
+  "trajectory_name": "tra1",
+  "status": {
+    "task_reviewed": true,
+    "object_id_reviewed": false,
+    "note": "",
+    "reviewed": true
+  },
+  "source": {
+    "query_image_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/first_frame/fixed_scene_task/episode620.png",
+    "query_image_name": "episode620.png",
+    "worldarena_label_task_name": "blocks_ranking_rgb",
+    "instruction_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/instructions/fixed_scene_task/episode620.json"
+  },
+  "task_definition": {
+    "instruction_en": "In a fixed robotic workspace, generate a rigid, physically consistent embodied robotic arm. The arm maintains high stability with no deformation and enters the frame to First, grab red block, then green block, then blue block with the left arm, the right arm, and the right arm, and place them in order left to right.",
+    "instruction_zh": "在固定的机器人工作空间中，生成刚性的、物理一致的具体机器人手臂。手臂保持高度稳定性，不变形，进入画面先用左臂、右臂、右臂抓住红色块，然后绿色块，然后蓝色块，从左到右依次放置。"
+  },
+  "object_binding": {
+    "confirmed_objects": []
+  },
+  "arms": {
+    "assignments": [
+      {
+        "slot": "A",
+        "arm": "left",
+        "order": 1
+      },
+      {
+        "slot": "B",
+        "arm": "right",
+        "order": 2
+      },
+      {
+        "slot": "C",
+        "arm": "right",
+        "order": 3
+      }
+    ],
+    "arm_order": [
+      "left",
+      "left",
+      "right"
+    ]
+  }
+}

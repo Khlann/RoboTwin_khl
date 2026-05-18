@@ -1,0 +1,36 @@
+{
+  "task_name": "scan_object",
+  "episode_name": "episode819",
+  "trajectory_name": "tra1",
+  "status": {
+    "task_reviewed": true,
+    "object_id_reviewed": true,
+    "note": "",
+    "reviewed": true
+  },
+  "source": {
+    "query_image_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/first_frame/fixed_scene_task/episode819.png",
+    "query_image_name": "episode819.png",
+    "worldarena_label_task_name": "scan_object",
+    "instruction_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/instructions/fixed_scene_task/episode819.json"
+  },
+  "task_definition": {
+    "instruction_en": "In a fixed robotic workspace, generate a rigid, physically consistent embodied robotic arm. The arm maintains high stability with no deformation and enters the frame to Hold the handheld scanner, grab the golden tea box, then scan the golden tea box using the handheld scanner.",
+    "instruction_zh": "在固定的机器人工作空间中，生成刚性的、物理一致的具体机器人手臂。手臂保持高稳定性，不变形，进入框架握住手持扫描仪，抓住金色茶叶盒，然后使用手持扫描仪扫描金色茶叶盒。"
+  },
+  "object_binding": {
+    "confirmed_objects": [
+      {
+        "slot": "A",
+        "modelname": "024_scanner",
+        "model_id": 2
+      },
+      {
+        "slot": "B",
+        "modelname": "112_tea-box",
+        "model_id": 3
+      }
+    ]
+  },
+  "arms": "none"
+}

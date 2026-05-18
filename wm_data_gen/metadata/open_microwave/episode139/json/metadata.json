@@ -1,0 +1,31 @@
+{
+  "task_name": "open_microwave",
+  "episode_name": "episode139",
+  "trajectory_name": "tra1",
+  "status": {
+    "task_reviewed": true,
+    "object_id_reviewed": true,
+    "note": "",
+    "reviewed": true
+  },
+  "source": {
+    "query_image_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/first_frame/fixed_scene_task/episode139.png",
+    "query_image_name": "episode139.png",
+    "worldarena_label_task_name": "open_microwave",
+    "instruction_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/instructions/fixed_scene_task/episode139.json"
+  },
+  "task_definition": {
+    "instruction_en": "In a fixed robotic workspace, generate a rigid, physically consistent embodied robotic arm. The arm maintains high stability with no deformation and enters the frame to Pull the handle to open the gray and yellow microwave with rounded edges.",
+    "instruction_zh": "在固定的机器人工作空间中，生成刚性的、物理一致的具体机器人手臂。手臂保持高稳定性，不变形，进入框架拉动手柄即可打开灰黄色圆边微波炉。"
+  },
+  "object_binding": {
+    "confirmed_objects": [
+      {
+        "slot": "A",
+        "modelname": "044_microwave",
+        "model_id": 7167
+      }
+    ]
+  },
+  "arms": "none"
+}

@@ -1,0 +1,36 @@
+{
+  "task_name": "scan_object",
+  "episode_name": "episode745",
+  "trajectory_name": "tra1",
+  "status": {
+    "task_reviewed": true,
+    "object_id_reviewed": true,
+    "note": "",
+    "reviewed": true
+  },
+  "source": {
+    "query_image_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/first_frame/fixed_scene_task/episode745.png",
+    "query_image_name": "episode745.png",
+    "worldarena_label_task_name": "scan_object",
+    "instruction_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/instructions/fixed_scene_task/episode745.json"
+  },
+  "task_definition": {
+    "instruction_en": "In a fixed robotic workspace, generate a rigid, physically consistent embodied robotic arm. The arm maintains high stability with no deformation and enters the frame to Pick the green tea box, grab the black and gray portable scanner, and use the black and gray portable scanner to scan the object.",
+    "instruction_zh": "在固定的机器人工作空间中，生成刚性的、物理一致的具体机器人手臂。手臂保持高稳定性，不变形，进入框架挑选绿茶盒，抓住黑灰色便携式扫描仪，使用黑灰色便携式扫描仪扫描物体。"
+  },
+  "object_binding": {
+    "confirmed_objects": [
+      {
+        "slot": "A",
+        "modelname": "024_scanner",
+        "model_id": 0
+      },
+      {
+        "slot": "B",
+        "modelname": "112_tea-box",
+        "model_id": 0
+      }
+    ]
+  },
+  "arms": "none"
+}

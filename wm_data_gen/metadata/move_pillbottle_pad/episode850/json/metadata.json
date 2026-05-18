@@ -1,0 +1,39 @@
+{
+  "task_name": "move_pillbottle_pad",
+  "episode_name": "episode850",
+  "trajectory_name": "tra1",
+  "status": {
+    "task_reviewed": true,
+    "object_id_reviewed": true,
+    "note": "",
+    "reviewed": true
+  },
+  "source": {
+    "query_image_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/first_frame/fixed_scene_task/episode850.png",
+    "query_image_name": "episode850.png",
+    "worldarena_label_task_name": "move_pillbottle_pad",
+    "instruction_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/instructions/fixed_scene_task/episode850.json"
+  },
+  "task_definition": {
+    "instruction_en": "In a fixed robotic workspace, generate a rigid, physically consistent embodied robotic arm. The arm maintains high stability with no deformation and enters the frame to Set the medium-sized white cylindrical container down on the pad after picking it.",
+    "instruction_zh": "在固定的机器人工作空间中，生成刚性的、物理一致的具体机器人手臂。手臂保持高稳定性，不变形，进入框架将中型白色圆柱形容器拾取后放置在垫子上。"
+  },
+  "object_binding": {
+    "confirmed_objects": [
+      {
+        "slot": "A",
+        "modelname": "080_pillbottle",
+        "model_id": 2
+      },
+      {
+        "slot": "B",
+        "modelname": "pad",
+        "model_id": "procedural",
+        "attrs": {
+          "pad_color": "#76cc6a"
+        }
+      }
+    ]
+  },
+  "arms": "none"
+}

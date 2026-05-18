@@ -1,0 +1,64 @@
+{
+  "task_name": "place_bread_basket",
+  "episode_name": "episode544",
+  "trajectory_name": "tra1",
+  "status": {
+    "task_reviewed": true,
+    "object_id_reviewed": true,
+    "note": "",
+    "reviewed": true
+  },
+  "source": {
+    "query_image_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/first_frame/fixed_scene_task/episode544.png",
+    "query_image_name": "episode544.png",
+    "worldarena_label_task_name": "place_bread_basket",
+    "instruction_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/instructions/fixed_scene_task/episode544.json"
+  },
+  "task_definition": {
+    "instruction_en": "In a fixed robotic workspace, generate a rigid, physically consistent embodied robotic arm. The arm maintains high stability with no deformation and enters the frame to Grab the golden baked bread and the golden bread loaf with soft inside quickly and drop them into the oval breadbasket.",
+    "instruction_zh": "在固定的机器人工作空间中，生成刚性的、物理一致的具体机器人手臂。手臂保持高度稳定性，不变形，进入框架快速抓取金黄的烤面包和内部柔软的金黄色面包，并将其放入椭圆形面包篮中。"
+  },
+  "object_binding": {
+    "confirmed_objects": [
+      {
+        "slot": "A",
+        "modelname": "076_breadbasket",
+        "model_id": 2
+      },
+      {
+        "slot": "B",
+        "modelname": "075_bread",
+        "model_id": 0
+      },
+      {
+        "slot": "C",
+        "modelname": "075_bread",
+        "model_id": 5
+      }
+    ]
+  },
+  "arms": {
+    "assignments": [
+      {
+        "arm": "left",
+        "order": 1,
+        "slot": "A"
+      },
+      {
+        "arm": "right",
+        "order": 2,
+        "slot": "B"
+      },
+      {
+        "arm": "left",
+        "order": 3,
+        "slot": "C"
+      }
+    ],
+    "arm_order": [
+      "left",
+      "right",
+      "left"
+    ]
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "task_name": "place_burger_fries",
+  "episode_name": "episode664",
+  "trajectory_name": "tra1",
+  "status": {
+    "task_reviewed": true,
+    "object_id_reviewed": true,
+    "note": "",
+    "reviewed": true
+  },
+  "source": {
+    "query_image_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/first_frame/fixed_scene_task/episode664.png",
+    "query_image_name": "episode664.png",
+    "worldarena_label_task_name": "place_burger_fries",
+    "instruction_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/instructions/fixed_scene_task/episode664.json"
+  },
+  "task_definition": {
+    "instruction_en": "In a fixed robotic workspace, generate a rigid, physically consistent embodied robotic arm. The arm maintains high stability with no deformation and enters the frame to Move the orange-white hamburg with yellow highlight and the Rectangular red carton holding fries onto the dark green rectangular plastic tray with both arms.",
+    "instruction_zh": "在固定的机器人工作空间中，生成刚性的、物理一致的具体机器人手臂。手臂保持高稳定性，不变形，进入框架，用双臂将带有黄色高光的橙白色汉堡和装有薯条的矩形红色纸盒移动到深绿色矩形塑料托盘上。"
+  },
+  "object_binding": {
+    "confirmed_objects": [
+      {
+        "slot": "A",
+        "modelname": "006_hamburg",
+        "model_id": 1
+      },
+      {
+        "slot": "B",
+        "modelname": "005_french-fries",
+        "model_id": 1
+      },
+      {
+        "slot": "C",
+        "modelname": "008_tray",
+        "model_id": 2
+      }
+    ]
+  },
+  "arms": {
+    "assignments": [
+      {
+        "arm": "left",
+        "order": 1,
+        "slot": "A"
+      },
+      {
+        "arm": "right",
+        "order": 2,
+        "slot": "B"
+      },
+      {
+        "arm": "left",
+        "order": 3,
+        "slot": "C"
+      }
+    ],
+    "arm_order": [
+      "left",
+      "right",
+      "left"
+    ]
+  }
+}

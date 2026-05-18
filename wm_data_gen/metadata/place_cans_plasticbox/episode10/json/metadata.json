@@ -1,0 +1,64 @@
+{
+  "task_name": "place_cans_plasticbox",
+  "episode_name": "episode10",
+  "trajectory_name": "tra1",
+  "status": {
+    "task_reviewed": true,
+    "object_id_reviewed": true,
+    "note": "",
+    "reviewed": true
+  },
+  "source": {
+    "query_image_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/first_frame/fixed_scene_task/episode10.png",
+    "query_image_name": "episode10.png",
+    "worldarena_label_task_name": "place_cans_plasticbox",
+    "instruction_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/instructions/fixed_scene_task/episode10.json"
+  },
+  "task_definition": {
+    "instruction_en": "In a fixed robotic workspace, generate a rigid, physically consistent embodied robotic arm. The arm maintains high stability with no deformation and enters the frame to Lift the red beverage can with curved top, put it in the blue plasticbox for storing things, then handle the smooth white can with accents similarly.",
+    "instruction_zh": "在固定的机器人工作空间中，生成刚性的、物理一致的具体机器人手臂。手臂保持高稳定性，不变形，进入框架将顶部弯曲的红色饮料罐提起，放入蓝色塑料盒中存放物品，然后类似地处理带有口音的光滑白色罐。"
+  },
+  "object_binding": {
+    "confirmed_objects": [
+      {
+        "slot": "A",
+        "modelname": "071_can",
+        "model_id": 1
+      },
+      {
+        "slot": "B",
+        "modelname": "071_can",
+        "model_id": 0
+      },
+      {
+        "slot": "C",
+        "modelname": "062_plasticbox",
+        "model_id": 3
+      }
+    ]
+  },
+  "arms": {
+    "assignments": [
+      {
+        "arm": "left",
+        "order": 1,
+        "slot": "A"
+      },
+      {
+        "arm": "right",
+        "order": 2,
+        "slot": "B"
+      },
+      {
+        "arm": "left",
+        "order": 3,
+        "slot": "C"
+      }
+    ],
+    "arm_order": [
+      "left",
+      "right",
+      "left"
+    ]
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "task_name": "stack_blocks_three",
+  "episode_name": "episode913",
+  "trajectory_name": "tra1",
+  "status": {
+    "task_reviewed": false,
+    "object_id_reviewed": true,
+    "note": "",
+    "reviewed": false
+  },
+  "source": {
+    "query_image_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/first_frame/fixed_scene_task/episode913.png",
+    "query_image_name": "episode913.png",
+    "worldarena_label_task_name": "stack_blocks_three",
+    "instruction_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/instructions/fixed_scene_task/episode913.json"
+  },
+  "task_definition": {
+    "instruction_en": "In a fixed robotic workspace, generate a rigid, physically consistent embodied robotic arm. The arm maintains high stability with no deformation and enters the frame to Shift red block, green block, and blue block to the center using the right arm, the left arm, the right arm, then pile blue block on green block, green block on red block.",
+    "instruction_zh": "在固定的机器人工作空间中，生成刚性的、物理一致的具体机器人手臂。手臂保持高度稳定性，不变形，进入画面后利用右臂、左臂、右臂将红块、绿块、蓝块移动到中心，然后将蓝块叠在绿块上，将绿块叠在红块上。"
+  },
+  "object_binding": {
+    "confirmed_objects": [
+      {
+        "slot": "A",
+        "modelname": "box",
+        "model_id": "procedural",
+        "attrs": {
+          "block_color": "#e08af0"
+        }
+      },
+      {
+        "slot": "B",
+        "modelname": "box",
+        "model_id": "procedural",
+        "attrs": {
+          "block_color": "#a6bd3b"
+        }
+      },
+      {
+        "slot": "C",
+        "modelname": "box",
+        "model_id": "procedural",
+        "attrs": {
+          "block_color": "#0b442f"
+        }
+      }
+    ]
+  },
+  "arms": "none"
+}

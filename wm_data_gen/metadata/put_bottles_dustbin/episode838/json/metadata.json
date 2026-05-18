@@ -1,0 +1,59 @@
+{
+  "task_name": "put_bottles_dustbin",
+  "episode_name": "episode838",
+  "trajectory_name": "tra1",
+  "status": {
+    "task_reviewed": true,
+    "object_id_reviewed": true,
+    "note": "",
+    "reviewed": true
+  },
+  "source": {
+    "query_image_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/first_frame/fixed_scene_task/episode838.png",
+    "query_image_name": "episode838.png",
+    "worldarena_label_task_name": "put_bottles_dustbin",
+    "instruction_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/instructions/fixed_scene_task/episode838.json"
+  },
+  "task_definition": {
+    "instruction_en": "In a fixed robotic workspace, generate a rigid, physically consistent embodied robotic arm. The arm maintains high stability with no deformation and enters the frame to Use arms to pick the smooth yellow bottle with ridged cap, the smooth transparent plastic bottle, the bottle with curved body shape, and place them one by one in the plastic dustbin.",
+    "instruction_zh": "在固定的机器人工作空间中，生成刚性的、物理一致的具体机器人手臂。手臂保持高稳定性，不变形，进入框架，用手臂拾取光滑的带棱角的黄色瓶子、光滑的透明塑料瓶、弧形瓶身的瓶子，将它们一一放入塑料垃圾箱中。"
+  },
+  "object_binding": {
+    "confirmed_objects": [
+      {
+        "slot": "B",
+        "modelname": "114_bottle",
+        "model_id": 2
+      },
+      {
+        "slot": "C",
+        "modelname": "114_bottle",
+        "model_id": 3
+      }
+    ]
+  },
+  "arms": {
+    "assignments": [
+      {
+        "arm": "left",
+        "order": 1,
+        "slot": "A"
+      },
+      {
+        "arm": "right",
+        "order": 2,
+        "slot": "B"
+      },
+      {
+        "arm": "left",
+        "order": 3,
+        "slot": "C"
+      }
+    ],
+    "arm_order": [
+      "left",
+      "right",
+      "left"
+    ]
+  }
+}

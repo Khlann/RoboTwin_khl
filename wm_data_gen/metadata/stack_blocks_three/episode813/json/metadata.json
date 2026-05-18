@@ -1,0 +1,73 @@
+{
+  "task_name": "stack_blocks_three",
+  "episode_name": "episode813",
+  "trajectory_name": "tra1",
+  "status": {
+    "task_reviewed": true,
+    "object_id_reviewed": true,
+    "note": "",
+    "reviewed": true
+  },
+  "source": {
+    "query_image_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/first_frame/fixed_scene_task/episode813.png",
+    "query_image_name": "episode813.png",
+    "worldarena_label_task_name": "stack_blocks_three",
+    "instruction_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/instructions/fixed_scene_task/episode813.json"
+  },
+  "task_definition": {
+    "instruction_en": "In a fixed robotic workspace, generate a rigid, physically consistent embodied robotic arm. The arm maintains high stability with no deformation and enters the frame to Transfer red block, green block, and blue block to the center, arranging blue block on top of green block and green block on red block with the left arm, the right arm, the right arm.",
+    "instruction_zh": "在固定的机器人工作空间中，生成刚性的、物理一致的具体机器人手臂。手臂保持高度稳定性，不变形，进入画面将红块、绿块、蓝块转移到中心，用左臂、右臂、右臂将蓝色块排列在绿色块上，将绿色块排列在红色块上。"
+  },
+  "object_binding": {
+    "confirmed_objects": [
+      {
+        "slot": "A",
+        "modelname": "box",
+        "model_id": "procedural",
+        "attrs": {
+          "block_color": "#429232"
+        }
+      },
+      {
+        "slot": "B",
+        "modelname": "box",
+        "model_id": "procedural",
+        "attrs": {
+          "block_color": "#076ed8"
+        }
+      },
+      {
+        "slot": "C",
+        "modelname": "box",
+        "model_id": "procedural",
+        "attrs": {
+          "block_color": "#5c931c"
+        }
+      }
+    ]
+  },
+  "arms": {
+    "assignments": [
+      {
+        "slot": "A",
+        "arm": "left",
+        "order": 1
+      },
+      {
+        "slot": "B",
+        "arm": "right",
+        "order": 2
+      },
+      {
+        "slot": "C",
+        "arm": "right",
+        "order": 3
+      }
+    ],
+    "arm_order": [
+      "left",
+      "right",
+      "right"
+    ]
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "task_name": "place_can_basket",
+  "episode_name": "episode637",
+  "trajectory_name": "tra1",
+  "status": {
+    "task_reviewed": true,
+    "object_id_reviewed": true,
+    "note": "",
+    "reviewed": true
+  },
+  "source": {
+    "query_image_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/first_frame/fixed_scene_task/episode637.png",
+    "query_image_name": "episode637.png",
+    "worldarena_label_task_name": "place_can_basket",
+    "instruction_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/instructions/fixed_scene_task/episode637.json"
+  },
+  "task_definition": {
+    "instruction_en": "In a fixed robotic workspace, generate a rigid, physically consistent embodied robotic arm. The arm maintains high stability with no deformation and enters the frame to Use the left arm to hold the small aluminum red drink can, drop the small aluminum red drink can into the carrying basket with black plastic handle, and lift the carrying basket with black plastic handle.",
+    "instruction_zh": "在固定的机器人工作空间中，生成刚性的、物理一致的具体机器人手臂。手臂保持高稳定性，不变形，进入框架用左臂握住红色铝制小饮料罐，将红色铝制小饮料罐放入黑色塑料手柄的提篮中，然后将黑色塑料手柄的提篮提起。"
+  },
+  "object_binding": {
+    "confirmed_objects": [
+      {
+        "slot": "A",
+        "modelname": "071_can",
+        "model_id": 3
+      },
+      {
+        "slot": "B",
+        "modelname": "110_basket",
+        "model_id": 1
+      }
+    ]
+  },
+  "arms": "left"
+}

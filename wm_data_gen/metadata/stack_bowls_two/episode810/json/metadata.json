@@ -1,0 +1,25 @@
+{
+  "task_name": "stack_bowls_two",
+  "episode_name": "episode810",
+  "trajectory_name": "tra1",
+  "status": {
+    "task_reviewed": true,
+    "object_id_reviewed": false,
+    "note": "",
+    "reviewed": true
+  },
+  "source": {
+    "query_image_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/first_frame/fixed_scene_task/episode810.png",
+    "query_image_name": "episode810.png",
+    "worldarena_label_task_name": "stack_bowls_two",
+    "instruction_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/instructions/fixed_scene_task/episode810.json"
+  },
+  "task_definition": {
+    "instruction_en": "In a fixed robotic workspace, generate a rigid, physically consistent embodied robotic arm. The arm maintains high stability with no deformation and enters the frame to Set the medium-sized bowl for holding food down, then add the dark inside bowl light blue outside over it.",
+    "instruction_zh": "在固定的机器人工作空间中，生成刚性的、物理一致的具体机器人手臂。手臂保持高度稳定性，不变形，进入框架后放置中等大小的碗来盛放食物，然后将深色的内碗放在外面浅蓝色的碗上。"
+  },
+  "object_binding": {
+    "confirmed_objects": []
+  },
+  "arms": "none"
+}

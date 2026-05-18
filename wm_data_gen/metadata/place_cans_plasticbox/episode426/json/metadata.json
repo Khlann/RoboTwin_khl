@@ -1,0 +1,59 @@
+{
+  "task_name": "place_cans_plasticbox",
+  "episode_name": "episode426",
+  "trajectory_name": "tra1",
+  "status": {
+    "task_reviewed": true,
+    "object_id_reviewed": true,
+    "note": "",
+    "reviewed": true
+  },
+  "source": {
+    "query_image_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/first_frame/fixed_scene_task/episode426.png",
+    "query_image_name": "episode426.png",
+    "worldarena_label_task_name": "place_cans_plasticbox",
+    "instruction_path": "/home/arlen-n/workspace/cy/wm/wm_data/test_dataset/instructions/fixed_scene_task/episode426.json"
+  },
+  "task_definition": {
+    "instruction_en": "In a fixed robotic workspace, generate a rigid, physically consistent embodied robotic arm. The arm maintains high stability with no deformation and enters the frame to Identify the small aluminum red drink can, place it in the plasticbox for keeping items safe, do the same for the metal can with printed white graphics.",
+    "instruction_zh": "在固定的机器人工作空间中，生成刚性的、物理一致的具体机器人手臂。机械臂保持高稳定性，不变形，进入框架可识别小型铝制红色饮料罐，将其放入塑料盒中以确保物品安全，对印有白色图形的金属罐进行同样的操作。"
+  },
+  "object_binding": {
+    "confirmed_objects": [
+      {
+        "slot": "A",
+        "modelname": "071_can",
+        "model_id": 3
+      },
+      {
+        "slot": "B",
+        "modelname": "071_can",
+        "model_id": 5
+      }
+    ]
+  },
+  "arms": {
+    "assignments": [
+      {
+        "arm": "left",
+        "order": 1,
+        "slot": "A"
+      },
+      {
+        "arm": "right",
+        "order": 2,
+        "slot": "B"
+      },
+      {
+        "arm": "left",
+        "order": 3,
+        "slot": "C"
+      }
+    ],
+    "arm_order": [
+      "left",
+      "right",
+      "left"
+    ]
+  }
+}
