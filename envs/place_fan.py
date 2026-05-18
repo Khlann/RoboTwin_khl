@@ -1,6 +1,6 @@
 from ._base_task import Base_Task
 from .utils import *
-from .utils.metadata_bridge import parse_forced_slot_a, rgb01_from_hex
+from .utils.metadata_bridge import parse_forced_slot_a, parse_slot_color, rgb01_from_hex
 import sapien
 import math
 from copy import deepcopy
@@ -67,12 +67,10 @@ class place_fan(Base_Task):
             "Silver": (0.75, 0.75, 0.75),
         }
 
-        hex_pad = None
-        if forced_attrs and isinstance(forced_attrs.get("pad_color"), str):
-            hex_pad = forced_attrs["pad_color"].strip()
-        rgb_pad = rgb01_from_hex(hex_pad) if hex_pad else None
+        rgb_pad = parse_slot_color("B", "pad_color")
         if rgb_pad is not None:
-            self.color_name = hex_pad if hex_pad.startswith("#") else f"#{hex_pad}"
+            r, g, b = rgb_pad
+            self.color_name = f"#{int(r*255):02x}{int(g*255):02x}{int(b*255):02x}"
             self.color_value = rgb_pad
         else:
             color_items = list(colors.items())
@@ -101,7 +99,7 @@ class place_fan(Base_Task):
 
     def play_once(self):
         # Determine which arm is closer to the object based on x-coordinate of the fan's position
-        arm_tag = ArmTag("right" if self.fan.get_pose().p[0] > 0 else "left")
+        arm_tag = self._resolve_arm_tag(self.fan.get_pose().p[0])
 
         # Grasp the fan with the selected arm
         self.move(self.grasp_actor(self.fan, arm_tag=arm_tag, pre_grasp_dis=0.05))
@@ -138,5 +136,4 @@ class place_fan(Base_Task):
 
         eps = np.array([0.05, 0.05, 0.05, 0.05])
 
-        return (np.all(abs(fan_qpose - target_qpose) < eps[-4:]) and self.robot.is_left_gripper_open()
-                and self.robot.is_right_gripper_open()) and (np.all(abs(fan_pose - target_pose) < np.array([0.04, 0.04, 0.04])))
+        return (np.all(abs(fan_qpose - target_qpose) < eps[-4:]) and self.is_target_gripper_open()) and (np.all(abs(fan_pose - target_pose) < np.array([0.04, 0.04, 0.04])))

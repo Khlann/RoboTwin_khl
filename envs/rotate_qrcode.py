@@ -42,7 +42,7 @@ class rotate_qrcode(Base_Task):
 
     def play_once(self):
         # Determine which arm to use based on QR code position (left if on left side, right otherwise)
-        arm_tag = ArmTag("left" if self.qrcode.get_pose().p[0] < 0 else "right")
+        arm_tag = self._resolve_arm_tag(self.qrcode.get_pose().p[0])
 
         # Grasp the QR code with specified pre-grasp distance
         self.move(self.grasp_actor(self.qrcode, arm_tag=arm_tag, pre_grasp_dis=0.05))
@@ -75,4 +75,4 @@ class rotate_qrcode(Base_Task):
             qrcode_quat = qrcode_quat * -1
         eps = 0.05
         return (np.all(np.abs(qrcode_quat - target_quat) < eps) and qrcode_pos[2] < 0.75 + self.table_z_bias
-                and self.is_left_gripper_open() and self.is_right_gripper_open())
+                and self.is_target_gripper_open())

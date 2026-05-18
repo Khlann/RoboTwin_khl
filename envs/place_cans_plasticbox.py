@@ -132,4 +132,4 @@ class place_cans_plasticbox(Base_Task):
         dis2 = min(np.linalg.norm(self.object2.get_pose().p[0:2] - plasticbox_functional_points_0),
                    np.linalg.norm(self.object2.get_pose().p[0:2] - plasticbox_functional_points_1))
         threshold = 0.04
-        return dis1 < threshold and dis2 < threshold and self.is_left_gripper_open() and self.is_right_gripper_open()
+        return dis1 < threshold and dis2 < threshold and self.is_target_gripper_open()

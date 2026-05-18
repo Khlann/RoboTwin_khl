@@ -37,11 +37,11 @@ class click_alarmclock(Base_Task):
             is_static=True,
         )
         self.add_prohibit_area(self.alarm, padding=0.05)
-        self.check_arm_function = self.is_left_gripper_close if self.alarm.get_pose().p[0] < 0 else self.is_right_gripper_close
+        self.check_arm_function = self.is_target_gripper_close
 
     def play_once(self):
         # Determine which arm to use based on alarm clock's position (right if positive x, left otherwise)
-        arm_tag = ArmTag("right" if self.alarm.get_pose().p[0] > 0 else "left")
+        arm_tag = self._resolve_arm_tag(self.alarm.get_pose().p[0])
     
         # Move the gripper above the top center of the alarm clock and close the gripper to simulate a click
         # Note: although the code structure resembles a grasp, it is used here to simulate a touch/click action

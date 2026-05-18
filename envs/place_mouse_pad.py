@@ -1,6 +1,6 @@
 from ._base_task import Base_Task
 from .utils import *
-from .utils.metadata_bridge import parse_forced_slot_a, rgb01_from_hex
+from .utils.metadata_bridge import parse_forced_slot_a, parse_slot_color, rgb01_from_hex
 import sapien
 import math
 from ._GLOBAL_CONFIGS import *
@@ -74,12 +74,10 @@ class place_mouse_pad(Base_Task):
             "Gray": (0.5, 0.5, 0.5),
         }
 
-        hex_pad = None
-        if forced_attrs and isinstance(forced_attrs.get("pad_color"), str):
-            hex_pad = forced_attrs["pad_color"].strip()
-        rgb_pad = rgb01_from_hex(hex_pad) if hex_pad else None
+        rgb_pad = parse_slot_color("B", "pad_color")
         if rgb_pad is not None:
-            self.color_name = hex_pad if hex_pad.startswith("#") else f"#{hex_pad}"
+            r, g, b = rgb_pad
+            self.color_name = f"#{int(r*255):02x}{int(g*255):02x}{int(b*255):02x}"
             self.color_value = rgb_pad
         else:
             color_items = list(colors.items())
@@ -102,7 +100,7 @@ class place_mouse_pad(Base_Task):
 
     def play_once(self):
         # Determine which arm to use based on mouse position (right if on right side, left otherwise)
-        arm_tag = ArmTag("right" if self.mouse.get_pose().p[0] > 0 else "left")
+        arm_tag = self._resolve_arm_tag(self.mouse.get_pose().p[0])
 
         # Grasp the mouse with the selected arm
         self.move(self.grasp_actor(self.mouse, arm_tag=arm_tag, pre_grasp_dis=0.1))
@@ -138,5 +136,4 @@ class place_mouse_pad(Base_Task):
 
         return (np.all(abs(mouse_pose[:2] - target_pos[:2]) < np.array([eps1, eps2]))
                 and (np.abs(mouse_qpose[2] * mouse_qpose[3] - 0.49) < eps1
-                     or np.abs(mouse_qpose[0] * mouse_qpose[1] - 0.49) < eps1) and self.robot.is_left_gripper_open()
-                and self.robot.is_right_gripper_open())
+                     or np.abs(mouse_qpose[0] * mouse_qpose[1] - 0.49) < eps1) and self.is_target_gripper_open())

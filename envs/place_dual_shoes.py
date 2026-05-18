@@ -156,4 +156,4 @@ class place_dual_shoes(Base_Task):
                 and np.all(abs(right_shoe_pose_q - target_pose_q) < eps[-4:])
                 and abs(left_shoe_pose_p[2] - (self.shoe_box.get_pose().p[2] + 0.01)) < 0.03
                 and abs(right_shoe_pose_p[2] - (self.shoe_box.get_pose().p[2] + 0.01)) < 0.03
-                and self.is_left_gripper_open() and self.is_right_gripper_open())
+                and self.is_target_gripper_open())

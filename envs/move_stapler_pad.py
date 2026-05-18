@@ -1,6 +1,6 @@
 from ._base_task import Base_Task
 from .utils import *
-from .utils.metadata_bridge import parse_forced_slot_a, rgb01_from_hex
+from .utils.metadata_bridge import parse_forced_slot_a, parse_slot_color, rgb01_from_hex
 import sapien
 import math
 from ._GLOBAL_CONFIGS import *
@@ -73,12 +73,10 @@ class move_stapler_pad(Base_Task):
             "Gray": (0.5, 0.5, 0.5),
         }
 
-        hex_pad = None
-        if forced_attrs and isinstance(forced_attrs.get("pad_color"), str):
-            hex_pad = forced_attrs["pad_color"].strip()
-        rgb_pad = rgb01_from_hex(hex_pad) if hex_pad else None
+        rgb_pad = parse_slot_color("B", "pad_color")
         if rgb_pad is not None:
-            self.color_name = hex_pad if hex_pad.startswith("#") else f"#{hex_pad}"
+            r, g, b = rgb_pad
+            self.color_name = f"#{int(r*255):02x}{int(g*255):02x}{int(b*255):02x}"
             self.color_value = rgb_pad
         else:
             color_items = list(colors.items())
@@ -100,7 +98,7 @@ class move_stapler_pad(Base_Task):
 
     def play_once(self):
         # Determine which arm to use based on stapler's position (right if on positive x, left otherwise)
-        arm_tag = ArmTag("right" if self.stapler.get_pose().p[0] > 0 else "left")
+        arm_tag = self._resolve_arm_tag(self.stapler.get_pose().p[0])
 
         # Grasp the stapler with specified arm
         self.move(self.grasp_actor(self.stapler, arm_tag=arm_tag, pre_grasp_dis=0.1))
@@ -131,5 +129,4 @@ class move_stapler_pad(Base_Task):
         target_pos = self.pad.get_pose().p
         eps = [0.02, 0.02, 0.01]
         return (np.all(abs(stapler_pose - target_pos) < np.array(eps))
-                and (stapler_qpose.max() - stapler_qpose.min()) < 0.02 and self.robot.is_left_gripper_open()
-                and self.robot.is_right_gripper_open())
+                and (stapler_qpose.max() - stapler_qpose.min()) < 0.02 and self.is_target_gripper_open())

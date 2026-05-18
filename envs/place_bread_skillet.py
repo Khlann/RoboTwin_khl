@@ -58,25 +58,39 @@ class place_bread_skillet(Base_Task):
         self.add_prohibit_area(self.bread, padding=0.03)
         self.add_prohibit_area(self.skillet, padding=0.05)
 
+    def _get_arm_for_slot(self, slot_name: str):
+        """根据 metadata assignments 决定 slot 的手臂，无 assignments 则按位置回退。"""
+        arms_cfg = getattr(self, "_arms_cfg", {})
+        assignments = arms_cfg.get("assignments", [])
+        for a in assignments:
+            if a.get("slot") == slot_name:
+                return ArmTag(a["arm"])
+        # fallback: 按物体位置决定
+        if slot_name == "B":
+            return self._resolve_arm_tag(self.skillet.get_pose().p[0])
+        else:
+            return self._resolve_arm_tag(self.bread.get_pose().p[0])
+
     def play_once(self):
-        # Determine which arm to use based on skillet position (right if on positive x, left otherwise)
-        arm_tag = ArmTag("right" if self.skillet.get_pose().p[0] > 0 else "left")
+        # 从 metadata assignments 读取手臂分配（slot A=bread, slot B=skillet）
+        skillet_arm = self._get_arm_for_slot("B")
+        bread_arm = self._get_arm_for_slot("A")
 
         # Grasp the skillet and bread simultaneously with dual arms
         self.move(
-            self.grasp_actor(self.skillet, arm_tag=arm_tag, pre_grasp_dis=0.07, gripper_pos=0),
-            self.grasp_actor(self.bread, arm_tag=arm_tag.opposite, pre_grasp_dis=0.07, gripper_pos=0),
+            self.grasp_actor(self.skillet, arm_tag=skillet_arm, pre_grasp_dis=0.07, gripper_pos=0),
+            self.grasp_actor(self.bread, arm_tag=bread_arm, pre_grasp_dis=0.07, gripper_pos=0),
         )
 
         # Lift both arms
         self.move(
-            self.move_by_displacement(arm_tag=arm_tag, z=0.1, move_axis="arm"),
-            self.move_by_displacement(arm_tag=arm_tag.opposite, z=0.1),
+            self.move_by_displacement(arm_tag=skillet_arm, z=0.1, move_axis="arm"),
+            self.move_by_displacement(arm_tag=bread_arm, z=0.1),
         )
 
-        # Define a custom target pose for the skillet based on its side (left or right)
-        target_pose = self.get_arm_pose(arm_tag=arm_tag)
-        if arm_tag == "left":
+        # Define a custom target pose for the skillet based on its arm
+        target_pose = self.get_arm_pose(arm_tag=skillet_arm)
+        if skillet_arm == "left":
             # Set specific position and orientation for left arm
             target_pose[:2] = [-0.1, -0.05]
             target_pose[2] -= 0.05
@@ -88,7 +102,7 @@ class place_bread_skillet(Base_Task):
             target_pose[3:] = [0, 0.707, 0, -0.707]
 
         # Place the skillet to the defined target pose
-        self.move(self.move_to_pose(arm_tag=arm_tag, target_pose=target_pose))
+        self.move(self.move_to_pose(arm_tag=skillet_arm, target_pose=target_pose))
 
         # Get the functional point of the skillet as placement target for the bread
         target_pose = self.skillet.get_functional_point(0)
@@ -98,7 +112,7 @@ class place_bread_skillet(Base_Task):
             self.place_actor(
                 self.bread,
                 target_pose=target_pose,
-                arm_tag=arm_tag.opposite,
+                arm_tag=bread_arm,
                 constrain="free",
                 pre_dis=0.05,
                 dis=0.05,
@@ -107,7 +121,7 @@ class place_bread_skillet(Base_Task):
         self.info["info"] = {
             "{A}": f"106_skillet/base{self.skillet_id}",
             "{B}": f"075_bread/base{self.bread_id}",
-            "{a}": str(arm_tag),
+            "{a}": str(skillet_arm),
         }
         return self.info
 

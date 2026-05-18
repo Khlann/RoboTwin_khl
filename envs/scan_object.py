@@ -55,10 +55,12 @@ class scan_object(Base_Task):
         self.right_object_target_pose = [0.03, -0.02, 0.95, 0.707, 0, 0.707, 0]
 
     def play_once(self):
-        scanner_arm_tag = ArmTag("left" if self.scanner.get_pose().p[0] < 0 else "right")
-        object_arm_tag = scanner_arm_tag.opposite
+        """以物体位置决定拿物体的手，另一只手自动拿扫描器。
+        single 模式下 move() 会将 dual-arm action 拆分为单步依次执行。"""
+        object_arm_tag = self._resolve_arm_tag(self.object.get_pose().p[0])
+        scanner_arm_tag = object_arm_tag.opposite
 
-        # Move the scanner and object to the gripper
+        # Grasp scanner and object
         self.move(
             self.grasp_actor(self.scanner, arm_tag=scanner_arm_tag, pre_grasp_dis=0.08),
             self.grasp_actor(self.object, arm_tag=object_arm_tag, pre_grasp_dis=0.08),
@@ -67,7 +69,7 @@ class scan_object(Base_Task):
             self.move_by_displacement(arm_tag=scanner_arm_tag, x=0.05 if scanner_arm_tag == "right" else -0.05, z=0.13),
             self.move_by_displacement(arm_tag=object_arm_tag, x=0.05 if object_arm_tag == "right" else -0.05, z=0.13),
         )
-        # Get object target pose and place the object
+        # Place the object at target pose
         object_target_pose = (self.right_object_target_pose
                               if object_arm_tag == "right" else self.left_object_target_pose)
         self.move(
@@ -108,5 +110,6 @@ class scan_object(Base_Task):
         dis = np.sum(target_vec * obj2scanner_vec)
         object_pose1 = object_pose + dis * target_vec
         eps = 0.025
+
         return (np.all(np.abs(object_pose1 - scanner_func_pose[:3]) < eps) and dis > 0 and dis < 0.07
-                and self.is_left_gripper_close() and self.is_right_gripper_close())
+                and self.is_target_gripper_close())

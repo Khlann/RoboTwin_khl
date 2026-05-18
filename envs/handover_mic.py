@@ -37,7 +37,36 @@ class handover_mic(Base_Task):
         self.grasp_arm_tag = ArmTag("right" if self.microphone.get_pose().p[0] > 0 else "left")
         self.handover_arm_tag = self.grasp_arm_tag.opposite
 
-    def play_once(self):
+    def _play_once_single(self):
+        """Single-arm mode: grasp the microphone with one arm and lift (no handover)."""
+        arm_tag = self._resolve_arm_tag(self.microphone.get_pose().p[0])
+
+        # Grasp the microphone
+        self.move(
+            self.grasp_actor(
+                self.microphone,
+                arm_tag=arm_tag,
+                contact_point_id=[1, 9, 10, 11, 12, 13, 14, 15],
+                pre_grasp_dis=0.1,
+            ))
+        # Lift the microphone
+        self.move(
+            self.move_by_displacement(
+                arm_tag,
+                z=0.12,
+                quat=(GRASP_DIRECTION_DIC["front_right"]
+                      if arm_tag == "left" else GRASP_DIRECTION_DIC["front_left"]),
+                move_axis="arm",
+            ))
+
+        self.info["info"] = {
+            "{A}": f"018_microphone/base{self.microphone_id}",
+            "{a}": str(arm_tag),
+        }
+        return self.info
+
+    def _play_once_dual(self):
+        """Dual-arm mode (original): handover the microphone between two arms."""
         # Determine the arm to grasp the microphone based on its position
         grasp_arm_tag = ArmTag("right" if self.microphone.get_pose().p[0] > 0 else "left")
         # The opposite arm will be used for the handover
@@ -60,7 +89,7 @@ class handover_mic(Base_Task):
                       if grasp_arm_tag == "left" else GRASP_DIRECTION_DIC["front_left"]),
                 move_axis="arm",
             ))
-        
+
         # Move the handover arm to the middle position for handover
         self.move(
             self.place_actor(
@@ -96,11 +125,31 @@ class handover_mic(Base_Task):
         }
         return self.info
 
+    def play_once(self):
+        mode = self._arms_cfg.get("mode", "multi")
+        if mode == "single":
+            return self._play_once_single()
+        return self._play_once_dual()
+
     def check_success(self):
         microphone_pose = self.microphone.get_functional_point(0)
         contact = self.get_gripper_actor_contact_position("018_microphone")
         if len(contact) == 0:
             return False
+
+        mode = self._arms_cfg.get("mode", "multi")
+        if mode == "single":
+            primary = self._arms_cfg.get("primary_arm", "none")
+            if primary == "left":
+                arm_tag = ArmTag("left")
+            elif primary == "right":
+                arm_tag = ArmTag("right")
+            else:
+                arm_tag = self._resolve_arm_tag(self.microphone.get_pose().p[0])
+            close_gripper_func = self.is_left_gripper_close if arm_tag == "left" else self.is_right_gripper_close
+            tag = microphone_pose[0] < 0 if arm_tag == "left" else microphone_pose[0] > 0
+            return (close_gripper_func() and microphone_pose[2] > 0.92 and tag)
+
         close_gripper_func = self.is_left_gripper_close if self.handover_arm_tag == "left" else self.is_right_gripper_close
         open_gripper_func = self.is_left_gripper_open if self.grasp_arm_tag == "left" else self.is_right_gripper_open
         tag = microphone_pose[0] < 0 if self.handover_arm_tag == "left" else microphone_pose[0] > 0

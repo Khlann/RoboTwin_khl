@@ -140,7 +140,7 @@ class place_object_scale(Base_Task):
 
     def play_once(self):
         # Determine which arm to use based on object's x position (right if positive, left if negative)
-        self.arm_tag = ArmTag("right" if self.object.get_pose().p[0] > 0 else "left")
+        self.arm_tag = self._resolve_arm_tag(self.object.get_pose().p[0])
 
         # Grasp the object with the selected arm
         self.move(self.grasp_actor(self.object, arm_tag=self.arm_tag))
@@ -173,5 +173,5 @@ class place_object_scale(Base_Task):
         scale_pose = self.scale.get_functional_point(0)
         distance_threshold = 0.035
         distance = np.linalg.norm(np.array(scale_pose[:2]) - np.array(object_pose[:2]))
-        check_arm = (self.is_left_gripper_open if self.arm_tag == "left" else self.is_right_gripper_open)
-        return (distance < distance_threshold and object_pose[2] > (scale_pose[2] - 0.01) and check_arm())
+        return (distance < distance_threshold and object_pose[2] > (scale_pose[2] - 0.01)
+                and self.is_target_gripper_open())

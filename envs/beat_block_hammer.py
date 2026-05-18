@@ -1,5 +1,6 @@
 from ._base_task import Base_Task
 from .utils import *
+from .utils.metadata_bridge import parse_slot_color
 import sapien
 from ._GLOBAL_CONFIGS import *
 
@@ -39,7 +40,7 @@ class beat_block_hammer(Base_Task):
             scene=self,
             pose=block_pose,
             half_size=(0.025, 0.025, 0.025),
-            color=(1, 0, 0),
+            color=parse_slot_color("B", "block_color", (1, 0, 0)),
             name="box",
             is_static=True,
         )
@@ -57,7 +58,7 @@ class beat_block_hammer(Base_Task):
         # Get the position of the block's functional point
         block_pose = self.block.get_functional_point(0, "pose").p
         # Determine which arm to use based on block position (left if block is on left side, else right)
-        arm_tag = ArmTag("left" if block_pose[0] < 0 else "right")
+        arm_tag = self._resolve_arm_tag(block_pose[0])
 
         # Grasp the hammer with the selected arm
         self.move(self.grasp_actor(self.hammer, arm_tag=arm_tag, pre_grasp_dis=0.12, grasp_dis=0.01))

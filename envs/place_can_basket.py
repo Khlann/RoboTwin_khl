@@ -10,7 +10,7 @@ class place_can_basket(Base_Task):
         super()._init_task_env_(**kwags)
 
     def load_actors(self):
-        self.arm_tag = ArmTag({0: "left", 1: "right"}[np.random.randint(0, 2)])
+        self.arm_tag = self._resolve_arm_tag()
 
         self.basket_name = "110_basket"
         self.basket_id = [0, 1][np.random.randint(0, 2)]

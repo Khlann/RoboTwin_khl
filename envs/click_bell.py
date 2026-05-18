@@ -34,11 +34,11 @@ class click_bell(Base_Task):
         )
 
         self.add_prohibit_area(self.bell, padding=0.07)
-        self.check_arm_function = self.is_left_gripper_close if self.bell.get_pose().p[0] < 0 else self.is_right_gripper_close
+        self.check_arm_function = self.is_target_gripper_close
     
     def play_once(self):
         # Choose the arm to use: right arm if the bell is on the right side (positive x), left otherwise
-        arm_tag = ArmTag("right" if self.bell.get_pose().p[0] > 0 else "left")
+        arm_tag = self._resolve_arm_tag(self.bell.get_pose().p[0])
     
         # Move the gripper above the top center of the bell and close the gripper to simulate a click
         # Note: grasp_actor here is not used to grasp the bell, but to simulate a touch/click action

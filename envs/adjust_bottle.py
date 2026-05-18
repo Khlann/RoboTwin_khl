@@ -34,10 +34,10 @@ class adjust_bottle(Base_Task):
         self.right_target_pose = [0.25, -0.12, 0.95, 0, 1, 0, 0]
 
     def play_once(self):
-        # Determine which arm to use based on qpose_tag (1 for right, else left)
-        arm_tag = ArmTag("right" if self.qpose_tag == 1 else "left")
-        # Select target pose based on qpose_tag (right_target_pose or left_target_pose)
-        target_pose = (self.right_target_pose if self.qpose_tag == 1 else self.left_target_pose)
+        # Determine which arm to use based on metadata primary_arm (fallback: qpose_tag)
+        arm_tag = self._resolve_arm_tag()
+        # Select target pose based on the arm actually used
+        target_pose = self.left_target_pose if arm_tag == "left" else self.right_target_pose
 
         # Grasp the bottle with specified arm
         self.move(self.grasp_actor(self.bottle, arm_tag=arm_tag, pre_grasp_dis=0.1))
@@ -63,5 +63,6 @@ class adjust_bottle(Base_Task):
     def check_success(self):
         target_hight = 0.9
         bottle_pose = self.bottle.get_functional_point(0)
-        return ((self.qpose_tag == 0 and bottle_pose[0] < -0.15) or
-                (self.qpose_tag == 1 and bottle_pose[0] > 0.15)) and bottle_pose[2] > target_hight
+        # Target x position depends on the arm used
+        target_x = -0.25 if self._resolve_arm_tag() == "left" else 0.25
+        return (abs(bottle_pose[0] - target_x) < 0.1 and bottle_pose[2] > target_hight)

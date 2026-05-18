@@ -29,7 +29,7 @@ class press_stapler(Base_Task):
 
     def play_once(self):
         # Determine which arm to use based on stapler's position (left if negative x, right otherwise)
-        arm_tag = ArmTag("left" if self.stapler.get_pose().p[0] < 0 else "right")
+        arm_tag = self._resolve_arm_tag(self.stapler.get_pose().p[0])
 
         # Move arm to the overhead position of the stapler and close the gripper
         self.move(self.grasp_actor(self.stapler, arm_tag=arm_tag, pre_grasp_dis=0.1, grasp_dis=0.1, contact_point_id=2))

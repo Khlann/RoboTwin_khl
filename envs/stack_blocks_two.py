@@ -1,5 +1,6 @@
 from ._base_task import Base_Task
 from .utils import *
+
 import sapien
 import math
 
@@ -59,28 +60,45 @@ class stack_blocks_two(Base_Task):
         self.prohibited_area.append(target_pose)
         self.block1_target_pose = [0, -0.13, 0.75 + self.table_z_bias, 0, 1, 0, 0]
 
+    def _get_arm_by_slot(self):
+        """从 metadata assignments 读取每个 slot 对应的手臂，无则回退到位置决定。"""
+        arms_cfg = getattr(self, "_arms_cfg", {})
+        assignments = arms_cfg.get("assignments", [])
+        arm_by_slot = {}
+        for a in assignments:
+            slot = a.get("slot")
+            arm = a.get("arm")
+            if slot and arm:
+                arm_by_slot[slot] = ArmTag(arm)
+        return arm_by_slot
+
     def play_once(self):
         # Initialize tracking variables for gripper and actor
         self.last_gripper = None
         self.last_actor = None
 
-        # Pick and place the first block (block1) and get its arm tag
-        arm_tag1 = self.pick_and_place_block(self.block1)
-        # Pick and place the second block (block2) and get its arm tag
-        arm_tag2 = self.pick_and_place_block(self.block2)
+        # 从 assignments 读取手臂分配，无 assignments 则按位置回退
+        arm_map = self._get_arm_by_slot()
+        arm_tag1 = arm_map.get("A") or self._resolve_arm_tag(self.block1.get_pose().p[0])
+        arm_tag2 = arm_map.get("B") or self._resolve_arm_tag(self.block2.get_pose().p[0])
+
+        # Pick and place blocks in fixed order: block1 -> block2
+        arm_tag1 = self.pick_and_place_block(self.block1, arm_tag1)
+        arm_tag2 = self.pick_and_place_block(self.block2, arm_tag2)
 
         # Store information about the blocks and their associated arms
         self.info["info"] = {
             "{A}": "red block",
             "{B}": "green block",
-            "{a}": arm_tag1,
-            "{b}": arm_tag2,
+            "{a}": str(arm_tag1),
+            "{b}": str(arm_tag2),
         }
         return self.info
 
-    def pick_and_place_block(self, block: Actor):
+    def pick_and_place_block(self, block: Actor, arm_tag=None):
         block_pose = block.get_pose().p
-        arm_tag = ArmTag("left" if block_pose[0] < 0 else "right")
+        if arm_tag is None:
+            arm_tag = self._resolve_arm_tag(block_pose[0])
 
         if self.last_gripper is not None and (self.last_gripper != arm_tag):
             self.move(
@@ -119,4 +137,4 @@ class stack_blocks_two(Base_Task):
         eps = [0.025, 0.025, 0.012]
 
         return (np.all(abs(block2_pose - np.array(block1_pose[:2].tolist() + [block1_pose[2] + 0.05])) < eps)
-                and self.is_left_gripper_open() and self.is_right_gripper_open())
+                and self.is_target_gripper_open())

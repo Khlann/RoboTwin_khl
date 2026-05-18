@@ -10,8 +10,8 @@ import time
 import numpy as np
 
 
-def _stamp_seal_forced_slot_a() -> tuple[int | None, dict | None]:
-    """Parse ROBOTWIN_FORCE_SLOTS_JSON for slot A (100_seal + optional attrs from metadata bridge)."""
+def _stamp_seal_forced_slots() -> tuple[int | None, str | None]:
+    """Parse ROBOTWIN_FORCE_SLOTS_JSON for slot A (seal id) and slot B (seal_color hex)."""
     raw = os.getenv("ROBOTWIN_FORCE_SLOTS_JSON", "").strip()
     if not raw:
         return None, None
@@ -22,21 +22,23 @@ def _stamp_seal_forced_slot_a() -> tuple[int | None, dict | None]:
     if not isinstance(slots, list):
         return None, None
     seal_id = None
-    attrs: dict | None = None
+    hex_color = None
     for it in slots:
         if not isinstance(it, dict):
             continue
-        if str(it.get("slot", "")).strip() != "A":
-            continue
-        if str(it.get("modelname", "")).strip() == "100_seal":
+        slot = str(it.get("slot", "")).strip()
+        if slot == "A" and str(it.get("modelname", "")).strip() == "100_seal":
             try:
                 seal_id = int(it["model_id"])
             except (TypeError, ValueError, KeyError):
                 pass
-        a = it.get("attrs")
-        if isinstance(a, dict) and a:
-            attrs = dict(a)
-    return seal_id, attrs
+        if slot == "B":
+            attrs = it.get("attrs")
+            if isinstance(attrs, dict) and attrs:
+                c = attrs.get("seal_color")
+                if isinstance(c, str) and c.strip():
+                    hex_color = c.strip()
+    return seal_id, hex_color
 
 
 def _rgb01_from_hex_string(s: str) -> tuple[float, float, float] | None:
@@ -74,7 +76,7 @@ class stamp_seal(Base_Task):
                 rotate_rand=False,
             )
 
-        forced_id, forced_attrs = _stamp_seal_forced_slot_a()
+        forced_id, forced_hex = _stamp_seal_forced_slots()
         allowed_seal = {0, 2, 3, 4, 6}
         if forced_id is not None and forced_id in allowed_seal:
             self.seal_id = forced_id
@@ -135,12 +137,9 @@ class stamp_seal(Base_Task):
             "Silver": (0.75, 0.75, 0.75),
         }
 
-        hex_from_meta = None
-        if forced_attrs and isinstance(forced_attrs.get("seal_color"), str):
-            hex_from_meta = forced_attrs["seal_color"].strip()
-        rgb = _rgb01_from_hex_string(hex_from_meta) if hex_from_meta else None
+        rgb = _rgb01_from_hex_string(forced_hex) if forced_hex else None
         if rgb is not None:
-            self.color_name = hex_from_meta if hex_from_meta.startswith("#") else f"#{hex_from_meta}"
+            self.color_name = forced_hex if forced_hex.startswith("#") else f"#{forced_hex}"
             self.color_value = rgb
         else:
             color_items = list(colors.items())
@@ -161,7 +160,7 @@ class stamp_seal(Base_Task):
 
     def play_once(self):
         # Determine which arm to use based on seal's position (right if on positive x-axis, else left)
-        arm_tag = ArmTag("right" if self.seal.get_pose().p[0] > 0 else "left")
+        arm_tag = self._resolve_arm_tag(self.seal.get_pose().p[0])
 
         # Grasp the seal with specified arm, with pre-grasp distance of 0.1
         self.move(self.grasp_actor(self.seal, arm_tag=arm_tag, pre_grasp_dis=0.1, contact_point_id=[4, 5, 6, 7]))
@@ -193,4 +192,4 @@ class stamp_seal(Base_Task):
         eps1 = 0.01
 
         return (np.all(abs(seal_pose[:2] - target_pos[:2]) < np.array([eps1, eps1]))
-                and self.robot.is_left_gripper_open() and self.robot.is_right_gripper_open())
+                and self.is_target_gripper_open())

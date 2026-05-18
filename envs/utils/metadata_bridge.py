@@ -81,6 +81,30 @@ def parse_blocks_ranking_forced_colors() -> list[tuple[float, float, float]] | N
     return out
 
 
+def parse_slot_color(slot_name: str, color_key: str, default_rgb: tuple[float, float, float] | None = None) -> tuple[float, float, float] | None:
+    """从 ROBOTWIN_FORCE_SLOTS_JSON 的指定 slot 读取颜色 attrs。"""
+    raw = os.getenv("ROBOTWIN_FORCE_SLOTS_JSON", "").strip()
+    if not raw:
+        return default_rgb
+    try:
+        slots = json.loads(raw)
+        if not isinstance(slots, list):
+            return default_rgb
+        for it in slots:
+            if not isinstance(it, dict):
+                continue
+            if str(it.get("slot", "")).strip() == slot_name:
+                attrs = it.get("attrs")
+                if isinstance(attrs, dict):
+                    hx = attrs.get(color_key)
+                    rgb = rgb01_from_hex(hx)
+                    if rgb:
+                        return rgb
+    except Exception:
+        pass
+    return default_rgb
+
+
 def rgb01_from_hex(s: str | None) -> tuple[float, float, float] | None:
     if not s or not isinstance(s, str):
         return None

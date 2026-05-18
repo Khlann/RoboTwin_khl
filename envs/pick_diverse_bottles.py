@@ -46,8 +46,50 @@ class pick_diverse_bottles(Base_Task):
         self.left_target_pose = [-0.06, -0.105, 1, 0, 1, 0, 0]
         self.right_target_pose = [0.06, -0.105, 1, 0, 1, 0, 0]
 
-    def play_once(self):
-        # Determine which arm to use for each bottle based on their x-coordinate position
+    def _play_once_single(self):
+        """Single-arm mode: pick and place bottles sequentially with one arm."""
+        arm_tag = self._resolve_arm_tag(self.bottle1.get_pose().p[0])
+
+        # Pick and place bottle1
+        self.move(self.grasp_actor(self.bottle1, arm_tag=arm_tag, pre_grasp_dis=0.08))
+        self.move(self.move_by_displacement(arm_tag=arm_tag, z=0.1))
+        self.move(
+            self.place_actor(
+                self.bottle1,
+                target_pose=self.left_target_pose,
+                arm_tag=arm_tag,
+                functional_point_id=0,
+                pre_dis=0.0,
+                dis=0.0,
+                is_open=False,
+            ))
+        self.move(self.move_by_displacement(arm_tag=arm_tag, z=0.07, move_axis="arm"))
+        self.move(self.back_to_origin(arm_tag=arm_tag))
+
+        # Pick and place bottle2
+        self.move(self.grasp_actor(self.bottle2, arm_tag=arm_tag, pre_grasp_dis=0.08))
+        self.move(self.move_by_displacement(arm_tag=arm_tag, z=0.1))
+        self.move(
+            self.place_actor(
+                self.bottle2,
+                target_pose=self.right_target_pose,
+                arm_tag=arm_tag,
+                functional_point_id=0,
+                pre_dis=0.0,
+                dis=0.0,
+                is_open=False,
+            ))
+        self.move(self.move_by_displacement(arm_tag=arm_tag, z=0.07, move_axis="arm"))
+        self.move(self.back_to_origin(arm_tag=arm_tag))
+
+        self.info["info"] = {
+            "{A}": f"001_bottle/base{self.bottle1_id}",
+            "{B}": f"001_bottle/base{self.bottle2_id}",
+        }
+        return self.info
+
+    def _play_once_dual(self):
+        """Dual-arm mode (original): grasp both bottles simultaneously."""
         bottle1_arm_tag = ArmTag("left")
         bottle2_arm_tag = ArmTag("right")
 
@@ -90,6 +132,12 @@ class pick_diverse_bottles(Base_Task):
             "{B}": f"001_bottle/base{self.bottle2_id}",
         }
         return self.info
+
+    def play_once(self):
+        mode = self._arms_cfg.get("mode", "multi")
+        if mode == "single":
+            return self._play_once_single()
+        return self._play_once_dual()
 
     def check_success(self):
         bottle1_target = self.left_target_pose[:2]

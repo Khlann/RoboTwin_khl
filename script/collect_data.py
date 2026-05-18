@@ -17,6 +17,20 @@ from argparse import ArgumentParser
 
 current_file_path = os.path.abspath(__file__)
 parent_directory = os.path.dirname(current_file_path)
+_wm_data_dir = os.path.normpath(os.path.join(parent_directory, "..", "wm_data"))
+if _wm_data_dir not in sys.path:
+    sys.path.insert(0, _wm_data_dir)
+from seed_blacklist import (  # noqa: E402
+    load_bad_seeds,
+    next_seed_skipping_bad,
+    record_bad_seed,
+    resolve_bad_seeds_path,
+)
+
+try:
+    from envs.utils.create_actor import UnStableError  # noqa: E402
+except ImportError:
+    UnStableError = Exception  # type: ignore[misc, assignment]
 
 
 def class_decorator(task_name):
@@ -104,7 +118,9 @@ def main(task_name=None, task_config=None):
 
 
 def run(TASK_ENV, args):
-    epid, suc_num, fail_num, seed_list = 0, 0, 0, []
+    forced_seed_raw = os.environ.get("ROBOTWIN_FORCE_SEED", "").strip()
+    epid = int(forced_seed_raw) if forced_seed_raw else 0
+    suc_num, fail_num, seed_list = 0, 0, []
 
     print(f"Task Name: \033[34m{args['task_name']}\033[0m")
 
@@ -118,11 +134,16 @@ def run(TASK_ENV, args):
         if not snapshot_path:
             raise RuntimeError("ROBOTWIN_SNAPSHOT_PATH is required when ROBOTWIN_SNAPSHOT_ONLY is set")
         seed = int(os.environ.get("ROBOTWIN_SNAPSHOT_SEED", "0"))
+        bad_path = resolve_bad_seeds_path(args["save_path"])
         os.makedirs(args["save_path"], exist_ok=True)
         try:
             TASK_ENV.setup_demo(now_ep_num=0, seed=seed, **args)
             TASK_ENV.save_camera_rgb(snapshot_path, camera_name="head_camera")
             print(f"\033[92m[ROBOTWIN_SNAPSHOT] saved:\033[0m {snapshot_path}")
+        except Exception:
+            if record_bad_seed(bad_path, seed):
+                print(f"\033[93m[bad_seeds] recorded seed {seed} -> {bad_path}\033[0m")
+            raise
         finally:
             try:
                 TASK_ENV.close_env()
@@ -151,7 +172,17 @@ def run(TASK_ENV, args):
                     epid = max(seed_list) + 1
             print(f"Exist seed file, Start from: {epid} / {suc_num}")
 
+        bad_path = resolve_bad_seeds_path(args["save_path"])
+        bad_seeds = load_bad_seeds(bad_path)
+        if bad_seeds:
+            print(f"\033[93m[bad_seeds] loaded {len(bad_seeds)} known-bad seed(s) from {bad_path}\033[0m")
+
         while suc_num < args["episode_num"]:
+            if epid in bad_seeds:
+                print(f"skip seed {epid} (blacklisted)")
+                epid += 1
+                continue
+
             try:
                 TASK_ENV.setup_demo(now_ep_num=suc_num, seed=epid, **args)
                 TASK_ENV.play_once()
@@ -164,6 +195,8 @@ def run(TASK_ENV, args):
                 else:
                     print(f"simulate data episode {suc_num} fail! (seed = {epid})")
                     fail_num += 1
+                    if record_bad_seed(bad_path, epid):
+                        bad_seeds.add(epid)
 
                 TASK_ENV.close_env()
 
@@ -175,6 +208,8 @@ def run(TASK_ENV, args):
                 print("Error: ", e)
                 print(" -------------")
                 fail_num += 1
+                if record_bad_seed(bad_path, epid):
+                    bad_seeds.add(epid)
                 TASK_ENV.close_env()
 
                 if args["render_freq"]:
@@ -187,11 +222,35 @@ def run(TASK_ENV, args):
                 print("Error: ", e)
                 print(" -------------")
                 fail_num += 1
+                if record_bad_seed(bad_path, epid):
+                    bad_seeds.add(epid)
                 TASK_ENV.close_env()
 
                 if args["render_freq"]:
                     TASK_ENV.viewer.close()
                 time.sleep(1)
+
+            # Single→Multi fallback: if 0 success after 5 failures, try multi
+            if suc_num == 0 and fail_num >= 5:
+                raw = os.environ.get("ROBOTWIN_FORCE_ARMS_JSON", "").strip()
+                if raw:
+                    try:
+                        arms_cfg = json.loads(raw)
+                        if isinstance(arms_cfg, str):
+                            arms_cfg = {"mode": "single", "primary_arm": arms_cfg}
+                        if isinstance(arms_cfg, dict) and arms_cfg.get("mode") == "single":
+                            print(f"\n\033[93m[ARMS FALLBACK] single mode failed {fail_num} times, switching to multi\033[0m")
+                            os.environ["ROBOTWIN_FORCE_ARMS_JSON"] = json.dumps({"mode": "multi"}, ensure_ascii=False)
+                            # Write a marker file so the caller (run_from_metadata.py) knows fallback happened
+                            fallback_marker = os.path.join(args["save_path"], ".arms_fallback_single_to_multi")
+                            with open(fallback_marker, "w") as fm:
+                                fm.write("1")
+                            bad_seeds.clear()
+                            if os.path.exists(bad_path):
+                                os.remove(bad_path)
+                            fail_num = 0
+                    except Exception:
+                        pass
 
             epid += 1
 
@@ -199,7 +258,12 @@ def run(TASK_ENV, args):
                 for sed in seed_list:
                     file.write("%s " % sed)
 
-        print(f"\nComplete simulation, failed \033[91m{fail_num}\033[0m times / {epid} tries \n")
+        print(f"\nComplete simulation, failed \033[91m{fail_num}\033[0m times / {epid} tries ", end="")
+        if bad_seeds:
+            print(f"(blacklist: {len(bad_seeds)} seeds in {bad_path})")
+        else:
+            print()
+        print()
     else:
         print("\033[93m" + "Use Saved Seeds List".center(30, "-") + "\033[0m")
         with open(os.path.join(args["save_path"], "seed.txt"), "r") as file:

@@ -1,5 +1,6 @@
 from ._base_task import Base_Task
 from .utils import *
+from .utils.metadata_bridge import parse_slot_color
 import math
 import sapien
 
@@ -14,7 +15,7 @@ class place_shoe(Base_Task):
             scene=self,
             pose=sapien.Pose([0, -0.08, 0.74], [1, 0, 0, 0]),
             half_size=(0.13, 0.05, 0.0005),
-            color=(0, 0, 1),
+            color=parse_slot_color("B", "target_color", (0, 0, 1)),
             is_static=True,
             name="box",
         )
@@ -61,7 +62,7 @@ class place_shoe(Base_Task):
 
     def play_once(self):
         shoe_pose = self.shoe.get_pose().p
-        arm_tag = ArmTag("left" if shoe_pose[0] < 0 else "right")
+        arm_tag = self._resolve_arm_tag(shoe_pose[0])
 
         # Grasp the shoe with specified pre-grasp distance and gripper position
         self.move(self.grasp_actor(self.shoe, arm_tag=arm_tag, pre_grasp_dis=0.1, gripper_pos=0))
@@ -96,5 +97,4 @@ class place_shoe(Base_Task):
         target_pose_q = np.array([0.5, 0.5, -0.5, -0.5])
         eps = np.array([0.05, 0.02, 0.07, 0.07, 0.07, 0.07])
         return (np.all(abs(shoe_pose_p[:2] - target_pose_p) < eps[:2])
-                and np.all(abs(shoe_pose_q - target_pose_q) < eps[-4:]) and self.is_left_gripper_open()
-                and self.is_right_gripper_open())
+                and np.all(abs(shoe_pose_q - target_pose_q) < eps[-4:]) and self.is_target_gripper_open())

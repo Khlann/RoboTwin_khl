@@ -92,7 +92,7 @@ class place_bread_basket(Base_Task):
     def play_once(self):
 
         def remove_bread(id, num):
-            arm_tag = ArmTag("right" if self.bread[id].get_pose().p[0] > 0 else "left")
+            arm_tag = self._resolve_arm_tag(self.bread[id].get_pose().p[0])
 
             # Grasp the bread
             self.move(self.grasp_actor(self.bread[id], arm_tag=arm_tag, pre_grasp_dis=0.07))
@@ -199,4 +199,4 @@ class place_bread_basket(Base_Task):
             else:
                 check = False
 
-        return (check and self.robot.is_left_gripper_open() and self.robot.is_right_gripper_open())
+        return (check and self.is_target_gripper_open())

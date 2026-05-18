@@ -44,7 +44,7 @@ class move_playingcard_away(Base_Task):
 
     def play_once(self):
         # Determine which arm to use based on playing cards position
-        arm_tag = ArmTag("right" if self.playingcards.get_pose().p[0] > 0 else "left")
+        arm_tag = self._resolve_arm_tag(self.playingcards.get_pose().p[0])
 
         # Grasp the playing cards with specified arm
         self.move(self.grasp_actor(self.playingcards, arm_tag=arm_tag, pre_grasp_dis=0.1, grasp_dis=0.01))
@@ -63,5 +63,4 @@ class move_playingcard_away(Base_Task):
         playingcards_pose = self.playingcards.get_pose().p
         edge_x = 0.23
 
-        return (np.all(abs(playingcards_pose[0]) > abs(edge_x)) and self.robot.is_left_gripper_open()
-                and self.robot.is_right_gripper_open())
+        return (np.all(abs(playingcards_pose[0]) > abs(edge_x)) and self.is_target_gripper_open())

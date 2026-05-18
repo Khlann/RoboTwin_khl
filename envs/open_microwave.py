@@ -11,7 +11,26 @@ class open_microwave(Base_Task):
 
     def load_actors(self):
         self.model_name = "044_microwave"
-        self.model_id = np.random.randint(0, 2)
+
+        # Read forced model_id from metadata
+        forced_id = None
+        slots_json = os.getenv("ROBOTWIN_FORCE_SLOTS_JSON", "").strip()
+        if slots_json:
+            try:
+                slots = json.loads(slots_json)
+                if isinstance(slots, list):
+                    for it in slots:
+                        if isinstance(it, dict) and str(it.get("slot", "")).strip() == "A":
+                            if str(it.get("modelname", "")).strip() == self.model_name:
+                                try:
+                                    forced_id = int(it["model_id"])
+                                except (TypeError, ValueError, KeyError):
+                                    forced_id = None
+                                break
+            except Exception:
+                pass
+
+        self.model_id = forced_id if forced_id is not None else np.random.randint(0, 2)
         self.microwave = rand_create_sapien_urdf_obj(
             scene=self,
             modelname=self.model_name,
@@ -29,7 +48,7 @@ class open_microwave(Base_Task):
         self.prohibited_area.append([-0.25, -0.25, 0.25, 0.1])
 
     def play_once(self):
-        arm_tag = ArmTag("left")
+        arm_tag = self._resolve_arm_tag()
 
         # Grasp the microwave with pre-grasp displacement
         self.move(self.grasp_actor(self.microwave, arm_tag=arm_tag, pre_grasp_dis=0.08, contact_point_id=0))

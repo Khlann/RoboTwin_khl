@@ -13,11 +13,16 @@ class place_object_basket(Base_Task):
         super()._init_task_env_(**kwags)
 
     def load_actors(self):
-        self.arm_tag = ArmTag({0: "left", 1: "right"}[np.random.randint(0, 2)])
+        self.arm_tag = self._resolve_arm_tag()
         self.basket_name = "110_basket"
         toycar_dict = {
-            "081_playingcards": [0, 1, 2],
+            "035_apple": [0, 1],
             "057_toycar": [0, 1, 2, 3, 4, 5],
+            "071_can": [0, 1, 2, 3, 5, 6],
+            "075_bread": [0, 1, 2, 3, 4, 5, 6],
+            "081_playingcards": [0, 1, 2],
+            "083_brush": [0, 1, 2, 3],
+            "093_brush-pen": [0, 1, 2, 3, 4, 5],
         }
 
         def parse_forced_slots_ab():
@@ -55,7 +60,7 @@ class place_object_basket(Base_Task):
             self.object_name, self.object_id, self.basket_id = forced
         else:
             self.basket_id = np.random.randint(0, 2)
-            self.object_name = ["081_playingcards", "057_toycar"][np.random.randint(0, 2)]
+            self.object_name = list(toycar_dict.keys())[np.random.randint(0, len(toycar_dict))]
             self.object_id = toycar_dict[self.object_name][np.random.randint(0, len(toycar_dict[self.object_name]))]
         if self.arm_tag == "left":  # toycar on left
             self.basket = rand_create_actor(

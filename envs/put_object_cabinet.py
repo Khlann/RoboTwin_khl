@@ -68,7 +68,7 @@ class put_object_cabinet(Base_Task):
             "107_soap",
         ]
 
-        def parse_forced_slot_a():
+        def parse_forced_slots():
             raw = os.getenv("ROBOTWIN_FORCE_SLOTS_JSON", "").strip()
             if not raw:
                 return None
@@ -83,25 +83,38 @@ class put_object_cabinet(Base_Task):
                     sn = str(it.get("slot", "")).strip()
                     if sn:
                         by_slot[sn] = it
-                if "A" not in by_slot:
+
+                # Read object from slot B (metadata uses B for the movable object)
+                if "B" not in by_slot:
                     return None
-                a = by_slot["A"]
-                obj_name = str(a.get("modelname", "")).strip()
-                obj_id = int(a["model_id"])
-                if obj_name not in object_list:
+                b = by_slot["B"]
+                obj_name = str(b.get("modelname", "")).strip()
+                obj_id_raw = b.get("model_id")
+                if obj_name not in object_list or obj_id_raw is None:
                     return None
-                # 槽位 B 在仿真里固定为柜子；metadata 常误把 top3 里的另一物体写进 B。
-                # 若 B 不是柜子则忽略 B，仍按槽位 A 强制，避免整段解析失败退回随机物体。
+                obj_id = int(obj_id_raw)
                 avail = get_available_model_ids(obj_name)
                 if not avail or obj_id not in avail:
                     return None
-                return obj_name, obj_id
+
+                # Optionally read cabinet id from slot A
+                cabinet_id = None
+                if "A" in by_slot:
+                    a = by_slot["A"]
+                    if str(a.get("modelname", "")).strip() == self.model_name:
+                        try:
+                            cabinet_id = int(a["model_id"])
+                        except (TypeError, ValueError, KeyError):
+                            cabinet_id = None
+                return obj_name, obj_id, cabinet_id
             except (TypeError, ValueError, KeyError):
                 return None
 
-        forced = parse_forced_slot_a()
+        forced = parse_forced_slots()
         if forced:
-            self.selected_modelname, self.selected_model_id = forced
+            self.selected_modelname, self.selected_model_id, forced_cabinet_id = forced
+            if forced_cabinet_id is not None:
+                self.model_id = forced_cabinet_id
         else:
             self.selected_modelname = np.random.choice(object_list)
             available_model_ids = get_available_model_ids(self.selected_modelname)
@@ -121,7 +134,7 @@ class put_object_cabinet(Base_Task):
         self.prohibited_area.append([-0.15, -0.3, 0.15, 0.3])
 
     def play_once(self):
-        arm_tag = ArmTag("right" if self.object.get_pose().p[0] > 0 else "left")
+        arm_tag = self._resolve_arm_tag(self.object.get_pose().p[0])
         self.arm_tag = arm_tag
         self.origin_z = self.object.get_pose().p[2]
 
@@ -159,4 +172,4 @@ class put_object_cabinet(Base_Task):
         target_pose = self.cabinet.get_functional_point(0)
         tag = np.all(abs(object_pose[:2] - target_pose[:2]) < np.array([0.05, 0.05]))
         return ((object_pose[2] - self.origin_z) > 0.007 and (object_pose[2] - self.origin_z) < 0.12 and tag
-                and (self.robot.is_left_gripper_open() if self.arm_tag == "left" else self.robot.is_right_gripper_open()))
+                and self.is_target_gripper_open())

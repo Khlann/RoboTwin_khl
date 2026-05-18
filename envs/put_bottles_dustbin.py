@@ -120,14 +120,26 @@ class put_bottles_dustbin(Base_Task):
         self.delay(2)
         self.right_middle_pose = [0, 0.0, 0.88, 0, 1, 0, 0]
 
+    def _get_arm_by_slot(self):
+        """从 metadata assignments 读取每个 slot 对应的手臂，无则回退到位置决定。"""
+        arms_cfg = getattr(self, "_arms_cfg", {})
+        assignments = arms_cfg.get("assignments", [])
+        arm_by_slot = {}
+        for a in assignments:
+            slot = a.get("slot")
+            arm = a.get("arm")
+            if slot and arm:
+                arm_by_slot[slot] = ArmTag(arm)
+        return arm_by_slot
+
     def play_once(self):
-        # Sort bottles based on their x and y coordinates
-        bottle_lst = sorted(self.bottles, key=lambda x: [x.get_pose().p[0] > 0, x.get_pose().p[1]])
+        # 从 assignments 读取手臂分配（bottles[0]=slotA, bottles[1]=slotB, bottles[2]=slotC）
+        arm_map = self._get_arm_by_slot()
 
         for i in range(self.bottle_num):
-            bottle = bottle_lst[i]
-            # Determine which arm to use based on bottle's x position
-            arm_tag = ArmTag("left" if bottle.get_pose().p[0] < 0 else "right")
+            bottle = self.bottles[i]
+            slot = ["A", "B", "C"][i]
+            arm_tag = arm_map.get(slot) or self._resolve_arm_tag(bottle.get_pose().p[0])
 
             delta_dis = 0.06
 

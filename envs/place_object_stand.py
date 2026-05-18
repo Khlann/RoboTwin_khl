@@ -172,7 +172,7 @@ class place_object_stand(Base_Task):
 
     def play_once(self):
         # Determine which arm to use based on object's x position
-        arm_tag = ArmTag("right" if self.object.get_pose().p[0] > 0 else "left")
+        arm_tag = self._resolve_arm_tag(self.object.get_pose().p[0])
 
         # Grasp the object with specified arm
         self.move(self.grasp_actor(self.object, arm_tag=arm_tag, pre_grasp_dis=0.1))
@@ -205,4 +205,4 @@ class place_object_stand(Base_Task):
         displaystand_pose = self.displaystand.get_pose().p
         eps1 = 0.03
         return (np.all(abs(object_pose[:2] - displaystand_pose[:2]) < np.array([eps1, eps1]))
-                and self.robot.is_left_gripper_open() and self.robot.is_right_gripper_open())
+                and self.is_target_gripper_open())

@@ -10,7 +10,36 @@ class hanging_mug(Base_Task):
         super()._init_task_env_(**kwags)
 
     def load_actors(self):
-        self.mug_id = np.random.choice([i for i in range(10)])
+        # Read forced model_ids from metadata
+        forced_mug_id = None
+        forced_rack_id = None
+        slots_json = os.getenv("ROBOTWIN_FORCE_SLOTS_JSON", "").strip()
+        if slots_json:
+            try:
+                slots = json.loads(slots_json)
+                if isinstance(slots, list):
+                    by_slot = {}
+                    for it in slots:
+                        if isinstance(it, dict):
+                            by_slot[str(it.get("slot", "")).strip()] = it
+                    if "A" in by_slot:
+                        a = by_slot["A"]
+                        if str(a.get("modelname", "")).strip() == "039_mug":
+                            try:
+                                forced_mug_id = int(a["model_id"])
+                            except (TypeError, ValueError, KeyError):
+                                forced_mug_id = None
+                    if "B" in by_slot:
+                        b = by_slot["B"]
+                        if str(b.get("modelname", "")).strip() == "040_rack":
+                            try:
+                                forced_rack_id = int(b.get("model_id", 0))
+                            except (TypeError, ValueError, KeyError):
+                                forced_rack_id = 0
+            except Exception:
+                pass
+
+        self.mug_id = forced_mug_id if forced_mug_id is not None else np.random.choice([i for i in range(10)])
         self.mug = rand_create_actor(
             self,
             xlim=[-0.25, -0.1],
@@ -32,7 +61,8 @@ class hanging_mug(Base_Task):
             qpos=[-0.22, -0.22, 0.67, 0.67],
         )
 
-        self.rack = create_actor(self, pose=rack_pose, modelname="040_rack", is_static=True, convex=True)
+        rack_id = forced_rack_id if forced_rack_id is not None else 0
+        self.rack = create_actor(self, pose=rack_pose, modelname="040_rack", model_id=rack_id, is_static=True, convex=True)
 
         self.add_prohibit_area(self.mug, padding=0.1)
         self.add_prohibit_area(self.rack, padding=0.1)
@@ -84,5 +114,5 @@ class hanging_mug(Base_Task):
         rack_function_pose = self.rack.get_functional_point(0)[:3]
         rack_middle_pose = (rack_pose + rack_function_pose) / 2
         eps = 0.02
-        return (np.all(abs((mug_function_pose - rack_middle_pose)[:2]) < eps) and self.is_right_gripper_open()
+        return (np.all(abs((mug_function_pose - rack_middle_pose)[:2]) < eps) and self.is_target_gripper_open()
                 and mug_function_pose[2] > 0.86)

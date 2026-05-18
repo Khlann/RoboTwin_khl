@@ -99,7 +99,7 @@ class dump_bin_bigbin(Base_Task):
         # Get deskbin's current position
         deskbin_pose = self.deskbin.get_pose().p
         # Determine which arm to use for grasping based on deskbin's position
-        grasp_deskbin_arm_tag = ArmTag("left" if deskbin_pose[0] < 0 else "right")
+        grasp_deskbin_arm_tag = self._resolve_arm_tag(deskbin_pose[0])
         # Always use left arm for placing
         place_deskbin_arm_tag = ArmTag("left")
 

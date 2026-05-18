@@ -122,7 +122,7 @@ class place_phone_stand(Base_Task):
 
     def play_once(self):
         # Determine which arm to use based on phone's position (left if phone is on left side, else right)
-        arm_tag = ArmTag("left" if self.phone.get_pose().p[0] < 0 else "right")
+        arm_tag = self._resolve_arm_tag(self.phone.get_pose().p[0])
 
         # Grasp the phone with specified arm
         self.move(self.grasp_actor(self.phone, arm_tag=arm_tag, pre_grasp_dis=0.08))
@@ -152,5 +152,4 @@ class place_phone_stand(Base_Task):
         phone_func_pose = np.array(self.phone.get_functional_point(0))
         stand_func_pose = np.array(self.stand.get_functional_point(0))
         eps = np.array([0.045, 0.04, 0.04])
-        return (np.all(np.abs(phone_func_pose - stand_func_pose)[:3] < eps) and self.is_left_gripper_open()
-                and self.is_right_gripper_open())
+        return (np.all(np.abs(phone_func_pose - stand_func_pose)[:3] < eps) and self.is_target_gripper_open())

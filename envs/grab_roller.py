@@ -31,8 +31,26 @@ class grab_roller(Base_Task):
 
         self.add_prohibit_area(self.roller, padding=0.1)
 
-    def play_once(self):
-        # Initialize arm tags for left and right arms
+    def _play_once_single(self):
+        """Single-arm mode: grasp the roller with one arm and lift."""
+        arm_tag = self._resolve_arm_tag(self.roller.get_pose().p[0])
+
+        # Grasp the roller with one arm
+        self.move(
+            self.grasp_actor(self.roller, arm_tag, pre_grasp_dis=0.08, contact_point_id=0),
+        )
+
+        # Lift the roller to height 0.85
+        self.move(
+            self.move_by_displacement(arm_tag, z=0.85 - self.roller.get_pose().p[2]),
+        )
+
+        # Record information about the roller in the info dictionary
+        self.info["info"] = {"{A}": f"102_roller/base{self.model_id}"}
+        return self.info
+
+    def _play_once_dual(self):
+        """Dual-arm mode (original): grasp the roller with both arms simultaneously."""
         left_arm_tag = ArmTag("left")
         right_arm_tag = ArmTag("right")
 
@@ -52,6 +70,16 @@ class grab_roller(Base_Task):
         self.info["info"] = {"{A}": f"102_roller/base{self.model_id}"}
         return self.info
 
+    def play_once(self):
+        mode = self._arms_cfg.get("mode", "multi")
+        if mode == "single":
+            return self._play_once_single()
+        return self._play_once_dual()
+
     def check_success(self):
         roller_pose = self.roller.get_pose().p
-        return (self.is_left_gripper_close() and self.is_right_gripper_close() and roller_pose[2] > 0.8)
+        lifted = roller_pose[2] > 0.8
+        mode = self._arms_cfg.get("mode", "multi")
+        if mode == "single":
+            return lifted and self.is_target_gripper_open()
+        return (self.is_left_gripper_close() and self.is_right_gripper_close() and lifted)

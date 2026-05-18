@@ -103,29 +103,48 @@ class blocks_ranking_rgb(Base_Task):
             0.74 + self.table_z_bias,
         ] + [0, 1, 0, 0]
 
+    def _get_arm_by_slot(self):
+        """从 metadata assignments 读取每个 slot 对应的手臂，无则回退到位置决定。"""
+        arms_cfg = getattr(self, "_arms_cfg", {})
+        assignments = arms_cfg.get("assignments", [])
+        arm_by_slot = {}
+        for a in assignments:
+            slot = a.get("slot")
+            arm = a.get("arm")
+            if slot and arm:
+                arm_by_slot[slot] = ArmTag(arm)
+        return arm_by_slot
+
     def play_once(self):
         # Initialize last gripper state
         self.last_gripper = None
 
+        # 从 assignments 读取手臂分配，无 assignments 则按位置回退
+        arm_map = self._get_arm_by_slot()
+        arm_tag1 = arm_map.get("A") or self._resolve_arm_tag(self.block1.get_pose().p[0])
+        arm_tag2 = arm_map.get("B") or self._resolve_arm_tag(self.block2.get_pose().p[0])
+        arm_tag3 = arm_map.get("C") or self._resolve_arm_tag(self.block3.get_pose().p[0])
+
         # Pick and place each block to their target positions
-        arm_tag1 = self.pick_and_place_block(self.block1, self.block1_target_pose)
-        arm_tag2 = self.pick_and_place_block(self.block2, self.block2_target_pose)
-        arm_tag3 = self.pick_and_place_block(self.block3, self.block3_target_pose)
+        arm_tag1 = self.pick_and_place_block(self.block1, self.block1_target_pose, arm_tag1)
+        arm_tag2 = self.pick_and_place_block(self.block2, self.block2_target_pose, arm_tag2)
+        arm_tag3 = self.pick_and_place_block(self.block3, self.block3_target_pose, arm_tag3)
 
         # Store information about the blocks and which arms were used
         self.info["info"] = {
             "{A}": "red block",
             "{B}": "green block",
             "{C}": "blue block",
-            "{a}": arm_tag1,
-            "{b}": arm_tag2,
-            "{c}": arm_tag3,
+            "{a}": str(arm_tag1),
+            "{b}": str(arm_tag2),
+            "{c}": str(arm_tag3),
         }
         return self.info
 
-    def pick_and_place_block(self, block, target_pose=None):
+    def pick_and_place_block(self, block, target_pose=None, arm_tag=None):
         block_pose = block.get_pose().p
-        arm_tag = ArmTag("left" if block_pose[0] < 0 else "right")
+        if arm_tag is None:
+            arm_tag = self._resolve_arm_tag(block_pose[0])
 
         if self.last_gripper is not None and (self.last_gripper != arm_tag):
             self.move(
@@ -161,4 +180,4 @@ class blocks_ranking_rgb(Base_Task):
 
         return (np.all(abs(block1_pose[:2] - block2_pose[:2]) < eps)
                 and np.all(abs(block2_pose[:2] - block3_pose[:2]) < eps) and block1_pose[0] < block2_pose[0]
-                and block2_pose[0] < block3_pose[0] and self.is_left_gripper_open() and self.is_right_gripper_open())
+                and block2_pose[0] < block3_pose[0] and self.is_target_gripper_open())

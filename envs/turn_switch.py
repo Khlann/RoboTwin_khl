@@ -27,7 +27,7 @@ class turn_switch(Base_Task):
     def play_once(self):
         switch_pose = self.switch.get_pose()
         face_dir = -switch_pose.to_transformation_matrix()[:3, 0]
-        arm_tag = ArmTag("right" if face_dir[0] > 0 else "left")
+        arm_tag = self._resolve_arm_tag(face_dir[0])
 
         # close gripper
         self.move(self.close_gripper(arm_tag=arm_tag, pos=0))

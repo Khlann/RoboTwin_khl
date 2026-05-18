@@ -159,6 +159,22 @@ class Base_Task(gym.Env):
 
         self.stage_success_tag = False
 
+        # Parse arms config from metadata bridge (env var injected by run_from_metadata.py)
+        try:
+            raw = os.environ.get("ROBOTWIN_FORCE_ARMS_JSON", "").strip()
+            if raw:
+                parsed = json.loads(raw)
+                if isinstance(parsed, str):
+                    self._arms_cfg = {"mode": "single", "primary_arm": parsed}
+                elif isinstance(parsed, dict):
+                    self._arms_cfg = parsed
+                else:
+                    self._arms_cfg = {}
+            else:
+                self._arms_cfg = {}
+        except Exception:
+            self._arms_cfg = {}
+
     def check_stable(self):
         actors_list, actors_pose_list = [], []
         for actor in self.scene.get_all_actors():
@@ -197,6 +213,41 @@ class Base_Task(gym.Env):
 
     def check_success(self):
         pass
+
+    # =========================================================== Arms Config Helpers ===========================================================
+    def _resolve_arm_tag(self, fallback_by_position=None):
+        """根据 metadata primary_arm 或 fallback 策略确定手臂。"""
+        arms_cfg = getattr(self, "_arms_cfg", {})
+        primary = arms_cfg.get("primary_arm", "none")
+        if primary in ("left", "right"):
+            return ArmTag(primary)
+        if fallback_by_position is not None:
+            return ArmTag("left" if fallback_by_position < 0 else "right")
+        return ArmTag("right")
+
+    def is_target_gripper_open(self):
+        """根据 single/multi 模式返回对应 gripper 的打开状态。"""
+        arms_cfg = getattr(self, "_arms_cfg", {})
+        mode = arms_cfg.get("mode", "multi")
+        if mode == "single":
+            primary = arms_cfg.get("primary_arm", "none")
+            if primary == "left":
+                return self.is_left_gripper_open()
+            elif primary == "right":
+                return self.is_right_gripper_open()
+        return self.is_right_gripper_open()
+
+    def is_target_gripper_close(self):
+        """根据 single/multi 模式返回对应 gripper 的闭合状态。"""
+        arms_cfg = getattr(self, "_arms_cfg", {})
+        mode = arms_cfg.get("mode", "multi")
+        if mode == "single":
+            primary = arms_cfg.get("primary_arm", "none")
+            if primary == "left":
+                return self.is_left_gripper_close()
+            elif primary == "right":
+                return self.is_right_gripper_close()
+        return self.is_left_gripper_close() and self.is_right_gripper_close()
 
     def setup_scene(self, **kwargs):
         """
@@ -890,7 +941,17 @@ class Base_Task(gym.Env):
     ):
         """
         Take action for the robot.
+        In single-arm mode, dual-arm actions are executed sequentially.
         """
+
+        # Single-arm fallback: execute dual-arm actions one at a time
+        arms_cfg = getattr(self, "_arms_cfg", {})
+        if arms_cfg.get("mode", "multi") == "single" and actions_by_arm2 is not None:
+            self.move(actions_by_arm1, None, save_freq)
+            if self.plan_success is False:
+                return False
+            self.move(actions_by_arm2, None, save_freq)
+            return True
 
         def get_actions(actions, arm_tag: ArmTag) -> list[Action]:
             if actions[1] is None:

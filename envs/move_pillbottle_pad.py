@@ -1,5 +1,6 @@
 from ._base_task import Base_Task
 from .utils import *
+from .utils.metadata_bridge import parse_slot_color
 import sapien
 import math
 from ._GLOBAL_CONFIGS import *
@@ -58,7 +59,7 @@ class move_pillbottle_pad(Base_Task):
             scene=self,
             pose=target_rand_pose,
             half_size=half_size,
-            color=(0, 0, 1),
+            color=parse_slot_color("B", "pad_color", (0, 0, 1)),
             name="box",
             is_static=True,
         )
@@ -67,7 +68,7 @@ class move_pillbottle_pad(Base_Task):
 
     def play_once(self):
         # Determine which arm to use based on pillbottle's position (right if on right side, left otherwise)
-        arm_tag = ArmTag("right" if self.pillbottle.get_pose().p[0] > 0 else "left")
+        arm_tag = self._resolve_arm_tag(self.pillbottle.get_pose().p[0])
 
         # Grasp the pillbottle
         self.move(self.grasp_actor(self.pillbottle, arm_tag=arm_tag, pre_grasp_dis=0.06, gripper_pos=0))
@@ -100,4 +101,4 @@ class move_pillbottle_pad(Base_Task):
         eps1 = 0.03
         return (np.all(abs(pillbottle_pos[:2] - target_pos[:2]) < np.array([eps1, eps1]))
                 and np.abs(self.pillbottle.get_pose().p[2] - (0.741 + self.table_z_bias)) < 0.005
-                and self.robot.is_left_gripper_open() and self.robot.is_right_gripper_open())
+                and self.is_target_gripper_open())

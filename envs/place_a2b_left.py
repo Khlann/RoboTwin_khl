@@ -160,7 +160,7 @@ class place_a2b_left(Base_Task):
 
     def play_once(self):
         # Determine which arm to use based on object's x position
-        arm_tag = ArmTag("right" if self.object.get_pose().p[0] > 0 else "left")
+        arm_tag = self._resolve_arm_tag(self.object.get_pose().p[0])
 
         # Grasp the object with specified arm
         self.move(self.grasp_actor(self.object, arm_tag=arm_tag, pre_grasp_dis=0.1))
@@ -187,5 +187,4 @@ class place_a2b_left(Base_Task):
         target_pos = self.target_object.get_pose().p
         distance = np.sqrt(np.sum((object_pose[:2] - target_pos[:2])**2))
         return np.all(distance < 0.2 and distance > 0.08 and object_pose[0] < target_pos[0]
-                      and abs(object_pose[1] - target_pos[1]) < 0.05 and self.robot.is_left_gripper_open()
-                      and self.robot.is_right_gripper_open())
+                      and abs(object_pose[1] - target_pos[1]) < 0.05 and self.is_target_gripper_open())

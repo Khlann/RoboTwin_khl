@@ -56,7 +56,7 @@ class stack_bowls_three(Base_Task):
 
     def move_bowl(self, actor, target_pose):
         actor_pose = actor.get_pose().p
-        arm_tag = ArmTag("left" if actor_pose[0] < 0 else "right")
+        arm_tag = self._resolve_arm_tag(actor_pose[0])
 
         if self.las_arm is None or arm_tag == self.las_arm:
             self.move(
@@ -120,4 +120,4 @@ class stack_bowls_three(Base_Task):
         return (np.all(abs(bowl1_pose[:2] - bowl2_pose[:2]) < eps2)
                 and np.all(abs(bowl2_pose[:2] - bowl3_pose[:2]) < eps2)
                 and np.all(np.array([bowl1_pose[2], bowl2_pose[2], bowl3_pose[2]]) - target_height < eps)
-                and self.is_left_gripper_open() and self.is_right_gripper_open())
+                and self.is_target_gripper_open())

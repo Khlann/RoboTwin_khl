@@ -1,5 +1,9 @@
+import json
+import os
+
 from ._base_task import Base_Task
 from .utils import *
+from .utils.metadata_bridge import parse_slot_color
 import sapien
 import math
 from ._GLOBAL_CONFIGS import *
@@ -23,7 +27,7 @@ class handover_block(Base_Task):
             scene=self,
             pose=rand_pos,
             half_size=(0.03, 0.03, 0.1),
-            color=(1, 0, 0),
+            color=parse_slot_color("A", "block_color", (1, 0, 0)),
             name="box",
             boxtype="long",
         )
@@ -37,7 +41,7 @@ class handover_block(Base_Task):
             scene=self,
             pose=rand_pos,
             half_size=(0.05, 0.05, 0.005),
-            color=(0, 0, 1),
+            color=parse_slot_color("B", "target_color", (0, 0, 1)),
             name="target_box",
             is_static=True,
         )
@@ -46,7 +50,44 @@ class handover_block(Base_Task):
         self.add_prohibit_area(self.target_box, padding=0.1)
         self.block_middle_pose = [0, 0.0, 0.9, 0, 1, 0, 0]
 
-    def play_once(self):
+    def _play_once_single(self):
+        """Single-arm mode: grasp -> lift -> place on target directly (no handover)."""
+        arm_tag = self._resolve_arm_tag(self.box.get_pose().p[0])
+
+        # Grasp the box
+        self.move(
+            self.grasp_actor(
+                self.box,
+                arm_tag=arm_tag,
+                pre_grasp_dis=0.07,
+                grasp_dis=0.0,
+                contact_point_id=[0, 1, 2, 3],
+            ))
+        # Lift the box up
+        self.move(self.move_by_displacement(arm_tag, z=0.1))
+        # Place the box directly on the target_box
+        self.move(
+            self.place_actor(
+                self.box,
+                target_pose=self.target_box.get_functional_point(1, "pose"),
+                arm_tag=arm_tag,
+                functional_point_id=0,
+                pre_dis=0.05,
+                dis=0.,
+                constrain="align",
+                pre_dis_axis="fp",
+            ))
+        # Open gripper to release
+        self.move(self.open_gripper(arm_tag))
+        # Move arm up
+        self.move(self.move_by_displacement(arm_tag, z=0.1, move_axis="arm"))
+        # Return to origin
+        self.move(self.back_to_origin(arm_tag))
+
+        return self.info
+
+    def _play_once_dual(self):
+        """Dual-arm mode (original handover logic): grasp -> handover -> place."""
         # Determine which arm to use for grasping based on box position
         grasp_arm_tag = ArmTag("left" if self.box.get_pose().p[0] < 0 else "right")
         # The other arm will be used for placing
@@ -108,9 +149,16 @@ class handover_block(Base_Task):
 
         return self.info
 
+    def play_once(self):
+        mode = self._arms_cfg.get("mode", "multi")
+        if mode == "single":
+            return self._play_once_single()
+        return self._play_once_dual()
+
     def check_success(self):
         box_pos = self.box.get_functional_point(0, "pose").p
         target_pose = self.target_box.get_functional_point(1, "pose").p
         eps = [0.03, 0.03]
-        return (np.all(np.abs(box_pos[:2] - target_pose[:2]) < eps) and abs(box_pos[2] - target_pose[2]) < 0.01
-                and self.is_right_gripper_open())
+        on_target = (np.all(np.abs(box_pos[:2] - target_pose[:2]) < eps)
+                     and abs(box_pos[2] - target_pose[2]) < 0.01)
+        return on_target and self.is_target_gripper_open()

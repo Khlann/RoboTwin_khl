@@ -41,7 +41,7 @@ class shake_bottle_horizontally(Base_Task):
 
     def play_once(self):
         # Determine which arm to use based on bottle position
-        arm_tag = ArmTag("right" if self.bottle.get_pose().p[0] > 0 else "left")
+        arm_tag = self._resolve_arm_tag(self.bottle.get_pose().p[0])
 
         # Grasp the bottle with specified pre-grasp distance
         self.move(self.grasp_actor(self.bottle, arm_tag=arm_tag, pre_grasp_dis=0.1))

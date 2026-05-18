@@ -82,29 +82,26 @@ class move_can_pot(Base_Task):
             convex=True,
             model_id=self.can_id,
         )
-        self.arm_tag = ArmTag("right" if self.can.get_pose().p[0] > 0 else "left")
         self.add_prohibit_area(self.pot, padding=0.03)
         self.add_prohibit_area(self.can, padding=0.1)
         pot_x, pot_y = self.pot.get_pose().p[0], self.pot.get_pose().p[1]
-        if self.arm_tag == "left":
-            self.prohibited_area.append([pot_x - 0.15, pot_y - 0.1, pot_x, pot_y + 0.1])
-        else:
-            self.prohibited_area.append([pot_x, pot_y - 0.1, pot_x + 0.15, pot_y + 0.1])
+        # Add symmetric prohibited area covering both sides
+        self.prohibited_area.append([pot_x - 0.15, pot_y - 0.1, pot_x + 0.15, pot_y + 0.1])
         self.orig_z = self.pot.get_pose().p[2]
 
-        # Get pot's current pose and calculate target pose for placing the can
+    def play_once(self):
+        # Determine arm_tag dynamically based on current can position
+        arm_tag = self._resolve_arm_tag(self.can.get_pose().p[0])
+        # Calculate target pose dynamically based on current pot position and arm_tag
         pot_pose = self.pot.get_pose()
-        self.target_pose = sapien.Pose(
+        target_pose = sapien.Pose(
             [
-                pot_pose.p[0] - 0.18 if self.arm_tag == "left" else pot_pose.p[0] + 0.18,
+                pot_pose.p[0] - 0.18 if arm_tag == "left" else pot_pose.p[0] + 0.18,
                 pot_pose.p[1],
                 0.741 + self.table_z_bias,
             ],
             pot_pose.q,
         )
-
-    def play_once(self):
-        arm_tag = self.arm_tag
         # Grasp the can with specified pre-grasp distance
         self.move(self.grasp_actor(self.can, arm_tag=arm_tag, pre_grasp_dis=0.05))
         # Move the can backward and upward
@@ -113,7 +110,7 @@ class move_can_pot(Base_Task):
         # Place the can near the pot at calculated target pose
         self.move(self.place_actor(
             self.can,
-            target_pose=self.target_pose,
+            target_pose=target_pose,
             arm_tag=arm_tag,
             pre_dis=0.05,
             dis=0.0,
@@ -133,12 +130,12 @@ class move_can_pot(Base_Task):
         x_rotate = can_pose_rpy[0] * 180 / np.pi
         y_rotate = can_pose_rpy[1] * 180 / np.pi
         eps = np.array([0.2, 0.035, 15, 15])
-        dis = (pot_pose[0] - can_pose[0] if self.arm_tag == "left" else can_pose[0] - pot_pose[0])
+        arm_tag = self._resolve_arm_tag(self.can.get_pose().p[0])
+        dis = (pot_pose[0] - can_pose[0] if arm_tag == "left" else can_pose[0] - pot_pose[0])
         check = True if dis > 0 else False
         return (np.all(np.array([
             abs(dis),
             np.abs(pot_pose[1] - can_pose[1]),
             abs(x_rotate - 90),
             abs(y_rotate),
-        ]) < eps) and check and can_pose[2] <= self.orig_z + 0.001 and self.robot.is_left_gripper_open()
-                and self.robot.is_right_gripper_open())
+        ]) < eps) and check and can_pose[2] <= self.orig_z + 0.001 and self.is_target_gripper_open())

@@ -80,7 +80,7 @@ class place_container_plate(Base_Task):
         # Get container's position to determine which arm to use
         container_pose = self.container.get_pose().p
         # Select arm based on container's x position (right if positive, left if negative)
-        arm_tag = ArmTag("right" if container_pose[0] > 0 else "left")
+        arm_tag = self._resolve_arm_tag(container_pose[0])
 
         # Grasp the container using selected arm with specific contact point
         self.move(
@@ -118,5 +118,4 @@ class place_container_plate(Base_Task):
         container_pose = self.container.get_pose().p
         target_pose = self.plate.get_pose().p
         eps = np.array([0.05, 0.05, 0.03])
-        return (np.all(abs(container_pose[:3] - target_pose) < eps) and self.is_left_gripper_open()
-                and self.is_right_gripper_open())
+        return (np.all(abs(container_pose[:3] - target_pose) < eps) and self.is_target_gripper_open())

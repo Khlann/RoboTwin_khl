@@ -128,4 +128,4 @@ class place_burger_fries(Base_Task):
         dis2 = np.linalg.norm(
             self.tray.get_functional_point(1, "pose").p[0:2] - self.frenchfries.get_functional_point(0, "pose").p[0:2])
         threshold = 0.08
-        return dis1 < threshold and dis2 < threshold and self.is_left_gripper_open() and self.is_right_gripper_open()
+        return dis1 < threshold and dis2 < threshold and self.is_target_gripper_open()
