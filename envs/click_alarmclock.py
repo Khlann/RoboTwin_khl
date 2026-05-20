@@ -37,28 +37,22 @@ class click_alarmclock(Base_Task):
             is_static=True,
         )
         self.add_prohibit_area(self.alarm, padding=0.05)
-        self.check_arm_function = self.is_target_gripper_close
+        self._click_arm_tag: ArmTag | None = None
 
     def play_once(self):
         # Determine which arm to use based on alarm clock's position (right if positive x, left otherwise)
         arm_tag = self._resolve_arm_tag(self.alarm.get_pose().p[0])
-    
-        # Move the gripper above the top center of the alarm clock and close the gripper to simulate a click
-        # Note: although the code structure resembles a grasp, it is used here to simulate a touch/click action
-        # You can adjust API parameters to move above the top button and close the gripper (similar to grasp_actor)
-        self.move((
-            ArmTag(arm_tag),
-            [
-                Action(
-                    arm_tag,
-                    "move",
-                    self.get_grasp_pose(self.alarm, pre_dis=0.1, contact_point_id=0, arm_tag=arm_tag)[:3] +
-                    [0.5, -0.5, 0.5, 0.5],
-                ),
-                Action(arm_tag, "close", target_gripper_pos=0.0),
-            ],
+        self._click_arm_tag = arm_tag
+
+        # Same click pattern as click_bell: grasp_actor plans touch pose; avoids None from get_grasp_pose.
+        self.move(self.grasp_actor(
+            self.alarm,
+            arm_tag=arm_tag,
+            pre_grasp_dis=0.1,
+            grasp_dis=0.1,
+            contact_point_id=0,
         ))
-    
+
         # Move the gripper downward to press the top button of the alarm clock
         self.move(self.move_by_displacement(arm_tag, z=-0.065))
         # Check whether the simulated click action was successful
@@ -77,14 +71,23 @@ class click_alarmclock(Base_Task):
         return self.info
 
 
+    def _click_gripper_is_closed(self) -> bool:
+        """Only the arm that performs the click must close (not both arms)."""
+        arm = self._click_arm_tag
+        if arm is None:
+            return self.is_target_gripper_close()
+        if str(arm) == "left" or arm == ArmTag("left"):
+            return self.is_left_gripper_close()
+        return self.is_right_gripper_close()
+
     def check_success(self):
         if self.stage_success_tag:
             return True
-        if not self.check_arm_function():
+        if not self._click_gripper_is_closed():
             return False
         alarm_pose = self.alarm.get_contact_point(0)[:3]
         positions = self.get_gripper_actor_contact_position("046_alarm-clock")
-        eps = [0.03, 0.03]
+        eps = [0.025, 0.025]
         for position in positions:
             if (np.all(np.abs(position[:2] - alarm_pose[:2]) < eps) and abs(position[2] - alarm_pose[2]) < 0.03):
                 self.stage_success_tag = True

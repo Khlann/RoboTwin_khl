@@ -18,6 +18,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -25,6 +26,23 @@ from typing import Any
 def episode_name_to_seed(episode_name: str) -> int:
     m = re.match(r"episode(\d+)$", str(episode_name).strip())
     return int(m.group(1)) if m else 0
+
+
+def arms_json_from_metadata(metadata: dict[str, Any]) -> str | None:
+    """Map metadata ``arms`` to ROBOTWIN_FORCE_ARMS_JSON (skip when task picks arm itself)."""
+    arms = metadata.get("arms")
+    if arms is None:
+        return None
+    if isinstance(arms, dict):
+        return json.dumps(arms, ensure_ascii=False)
+    if not isinstance(arms, str):
+        return None
+    s = arms.strip()
+    if not s or s.lower() in ("none", "未明确指明"):
+        return None
+    if s in ("left", "right"):
+        return json.dumps({"mode": "single", "primary_arm": s}, ensure_ascii=False)
+    return json.dumps({"mode": "single", "primary_arm": s}, ensure_ascii=False)
 
 
 def _env_int(name: str, default: int) -> int:
@@ -48,7 +66,7 @@ def _default_robotwin_root() -> Path:
     return Path(__file__).resolve().parent.parent
 
 
-def main() -> None:
+def main() -> int:
     p = argparse.ArgumentParser(description="Run RoboTwin data collection from one metadata.json and copy outputs back.")
     p.add_argument(
         "--metadata",
@@ -99,19 +117,22 @@ def main() -> None:
     metadata_path = args.metadata.resolve()
 
     metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
-    task = metadata["task_definition"]["final_task_name"]
+    task = metadata["task_name"]
     episode_name = metadata["episode_name"]
+    episode_root = metadata_path.parent.parent
+    base_seed = episode_name_to_seed(episode_name)
+    used_seed: int | None = None
 
     out_root = robotwin_root / "data" / task / args.task_config
     hdf5_dir = out_root / "data"
     video_dir = out_root / "video"
 
     if args.snapshot_only and args.skip_run:
-        raise SystemExit("--snapshot-only cannot be used with --skip-run")
+        print("--snapshot-only cannot be used with --skip-run", file=sys.stderr)
+        return 1
 
     snapshot_path: Path | None = None
     if args.snapshot_only:
-        episode_root = metadata_path.parent.parent
         if args.preview_root is not None:
             preview_root = Path(args.preview_root).resolve()
         else:
@@ -130,6 +151,9 @@ def main() -> None:
                 env["ROBOTWIN_FORCE_MODEL_ID"] = str(confirmed[0]["model_id"])
         except Exception:
             pass
+        arms_json = arms_json_from_metadata(metadata)
+        if arms_json:
+            env["ROBOTWIN_FORCE_ARMS_JSON"] = arms_json
 
         if args.snapshot_only and snapshot_path is not None:
             max_r = max(1, int(args.snapshot_max_retries))
@@ -156,35 +180,66 @@ def main() -> None:
                     print("Snapshot saved:")
                     print("-", snapshot_path.resolve())
                     print(f"(snapshot seed used: {seed}, try {attempt + 1}/{max_r})")
-                    return
-            raise FileNotFoundError(
-                f"Snapshot not created after {max_r} tries (last returncode={last_rc}): {snapshot_path}"
+                    return 0
+            print(
+                f"Snapshot not created after {max_r} tries (last returncode={last_rc}): {snapshot_path}",
+                file=sys.stderr,
             )
+            return 1
 
         if out_root.exists() and not args.keep_existing:
             shutil.rmtree(out_root)
         env.pop("ROBOTWIN_SNAPSHOT_ONLY", None)
         env.pop("ROBOTWIN_SNAPSHOT_PATH", None)
         env.pop("ROBOTWIN_SNAPSHOT_SEED", None)
-        print("Running:", " ".join(cmd))
-        subprocess.run(cmd, cwd=str(robotwin_root), env=env, check=True)
+
+        def _collect_outputs_ready() -> bool:
+            return bool(list(hdf5_dir.glob("episode*.hdf5")) and list(video_dir.glob("episode*.mp4")))
+
+        max_r = max(1, _env_int("ROBOTWIN_VIDEO_MAX_RETRIES", 8))
+        step = max(1, _env_int("ROBOTWIN_VIDEO_RETRY_STEP", 1))
+        last_rc: int | None = None
+        used_seed: int | None = None
+        for attempt in range(max_r):
+            seed = base_seed + attempt * step
+            if out_root.exists() and not args.keep_existing:
+                shutil.rmtree(out_root)
+            env["ROBOTWIN_FORCE_SEED"] = str(seed)
+            print(f"Running (video {attempt + 1}/{max_r}, seed={seed}):", " ".join(cmd))
+            r = subprocess.run(cmd, cwd=str(robotwin_root), env=env, check=False)
+            last_rc = r.returncode
+            if r.returncode == 0 and _collect_outputs_ready():
+                used_seed = seed
+                break
+            if r.returncode != 0:
+                print(f"collect_data exit {r.returncode} (seed={seed}), retrying...")
+            elif not _collect_outputs_ready():
+                print(f"collect_data exit 0 but no hdf5/mp4 (seed={seed}), retrying...")
+        else:
+            print(
+                f"collect_data failed after {max_r} tries (last returncode={last_rc}, "
+                f"base_seed={base_seed}, step={step})",
+                file=sys.stderr,
+            )
+            return 1
 
     if args.snapshot_only:
         if snapshot_path is None or not snapshot_path.is_file():
-            raise FileNotFoundError(f"Snapshot not created: {snapshot_path}")
+            print(f"Snapshot not created: {snapshot_path}", file=sys.stderr)
+            return 1
         print("Snapshot saved:")
         print("-", snapshot_path.resolve())
-        return
+        return 0
 
     hdf5_files = sorted(hdf5_dir.glob("episode*.hdf5"))
     mp4_files = sorted(video_dir.glob("episode*.mp4"))
     if not hdf5_files or not mp4_files:
-        raise FileNotFoundError(f"No outputs found under {out_root}")
+        print(f"No outputs found under {out_root}", file=sys.stderr)
+        return 1
 
     src_hdf5 = newest_file(hdf5_files)
     src_mp4 = newest_file(mp4_files)
 
-    episode_root = metadata_path.parent.parent
     tra1_dir = episode_root / "tra1"
     (tra1_dir / "data").mkdir(parents=True, exist_ok=True)
     (tra1_dir / "video").mkdir(parents=True, exist_ok=True)
@@ -209,13 +264,22 @@ def main() -> None:
         "forced_legacy_model_id": env.get("ROBOTWIN_FORCE_MODEL_ID", ""),
         "note": "桥接器会在采集进程注入 ROBOTWIN_FORCE_TASK_NAME、ROBOTWIN_FORCE_SLOTS_JSON 与 ROBOTWIN_FORCE_MODEL_ID（兼容旧逻辑）。",
     }
+    if used_seed is not None:
+        log_obj["collect_seed"] = used_seed
     (tra1_dir / "run_log.json").write_text(json.dumps(log_obj, ensure_ascii=False, indent=2), encoding="utf-8")
+    if used_seed is not None and used_seed != base_seed:
+        seed_info = episode_root / ".seed_info.json"
+        seed_info.write_text(
+            json.dumps({"seed": used_seed, "base_seed": base_seed, "mode": "video"}, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
 
     print("Done.")
     print("Copied:")
     print("-", dst_hdf5)
     print("-", dst_mp4)
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

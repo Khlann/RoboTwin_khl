@@ -25,7 +25,7 @@
         "modelname": "box",
         "model_id": "procedural",
         "attrs": {
-          "block_color": "#333ff7"
+          "block_color": "#ff0000"
         }
       }
     ]

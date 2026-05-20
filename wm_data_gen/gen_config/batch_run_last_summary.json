@@ -1,11 +1,10 @@
 {
-  "mode": "multi_episode_snapshot",
-  "title": "Preview · adjust_bottle · 指定多条",
-  "total": 1,
-  "skipped": 0,
-  "ok": 1,
+  "mode": "all_tasks_snapshot_batch",
+  "title": "Preview · 全部任务",
+  "total": 1000,
+  "skipped": 1000,
+  "ok": 0,
   "fail": 0,
   "failures": [],
-  "failure_log_jsonl": "/home/arlen-n/workspace/cy/wm/RoboTwin/wm_data_gen/gen_config/batch_run_failures.jsonl",
-  "task": "adjust_bottle"
+  "failure_log_jsonl": "/home/arlen-n/workspace/cy/wm/RoboTwin/wm_data_gen/gen_config/batch_run_failures.jsonl"
 }

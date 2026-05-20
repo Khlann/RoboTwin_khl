@@ -623,6 +623,8 @@ class Base_Task(gym.Env):
         self.need_plan = args.get("need_plan", True)
         self.left_joint_path = args.get("left_joint_path", [])
         self.right_joint_path = args.get("right_joint_path", [])
+        self.left_cnt = 0
+        self.right_cnt = 0
 
     def _set_eval_video_ffmpeg(self, ffmpeg):
         self.eval_video_ffmpeg = ffmpeg

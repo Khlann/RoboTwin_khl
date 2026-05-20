@@ -72,6 +72,9 @@ def invoke_run_from_metadata(argv: list[str]) -> int:
         sys.argv = [str(wm_data / "run_from_metadata.py"), *argv]
         rc = rob_main()
         return int(rc) if rc is not None else 0
+    except (RuntimeError, FileNotFoundError) as e:
+        print(f"run_from_metadata error: {e}", file=sys.stderr)
+        return 1
     finally:
         sys.argv = saved_argv
 
